@@ -43,7 +43,7 @@ index.html                     GENERATED — the shareable file. Never edit by h
 
 ## Verify recipe (verifier follows this exactly, in order)
 
-1. `node --test test/`
+1. `node --test test/*.mjs`
 2. `node scripts/build.mjs`
 3. `git diff --exit-code -- index.html` (generated file is up to date)
 4. Browser smoke: `node scripts/smoke.mjs` — opens `index.html` with Playwright
