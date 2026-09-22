@@ -77,7 +77,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .badge-Likely{color:var(--accent);border-color:var(--accent)}
 .badge-Guessing{color:var(--overridden);border-color:var(--overridden)}
 .pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;white-space:nowrap}
-.pill-haiku{background:var(--badge-haiku)}.pill-sonnet{background:var(--badge-sonnet)}.pill-opus{background:var(--badge-opus)}
+.pill-haiku{background:var(--badge-haiku)}.pill-sonnet{background:var(--badge-sonnet)}.pill-opus{background:var(--badge-opus)}.pill-fable{background:var(--text)}
 .pill-round{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
 .a-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:var(--space-2) var(--space-3);align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border)}
 .a-row:last-child{border-bottom:none}
@@ -1468,6 +1468,7 @@ function estimate(house, overrides) {
     var m = String(model || '').toLowerCase();
     if (m.indexOf('haiku') > -1) return 'pill-haiku';
     if (m.indexOf('opus') > -1) return 'pill-opus';
+    if (m.indexOf('fable') > -1) return 'pill-fable';
     return 'pill-sonnet';
   }
   function renderBuildStory(){
