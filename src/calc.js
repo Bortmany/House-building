@@ -16,43 +16,43 @@
 export const DEFAULTS = {
   /* --- Section 1: blocks --- */
   block_ext_length: {
-    value: 400, unit: 'mm', label: 'External block length', group: 'blocks',
+    value: 400, unit: 'mm', label: 'External block length', group: 'blocks', used: false,
     rationale: 'Standard GCC hollow block face size (400x200xh).',
     source: 'Al Madina Cement Products (mcp.om) product range', sourceUrl: 'https://mcp.om',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_ext_height: {
-    value: 200, unit: 'mm', label: 'Block face height', group: 'blocks',
+    value: 200, unit: 'mm', label: 'Block face height', group: 'blocks', used: false,
     rationale: 'Standard block face height.',
     source: 'Al Madina Cement Products (mcp.om)', sourceUrl: 'https://mcp.om',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_ext_thickness: {
-    value: 200, unit: 'mm', label: 'External wall block thickness', group: 'blocks',
+    value: 200, unit: 'mm', label: 'External wall block thickness', group: 'blocks', used: false,
     rationale: 'Typical external wall block — load path plus insulation mass.',
     source: 'Common GCC villa spec (Muscat Municipality practice)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_int_thickness: {
-    value: 150, unit: 'mm', label: 'Internal wall block thickness', group: 'blocks',
+    value: 150, unit: 'mm', label: 'Internal wall block thickness', group: 'blocks', used: false,
     rationale: 'Typical internal partition block, non-load-bearing.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   mortar_joint_mm: {
-    value: 10, unit: 'mm', label: 'Mortar joint thickness', group: 'blocks',
+    value: 10, unit: 'mm', label: 'Mortar joint thickness', group: 'blocks', used: false,
     rationale: 'Standard bed and head joint.',
     source: 'General masonry practice (BS 5628 / regional norm)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   blocks_per_m2_wall: {
-    value: 12.5, unit: 'pcs/m2', label: 'Blocks per square metre of wall', group: 'blocks',
+    value: 12.5, unit: 'pcs/m2', label: 'Blocks per square metre of wall', group: 'blocks', used: true,
     rationale: 'A 400x200 block plus a 10 mm joint covers about 0.0861 m2 (11.6 blocks/m2), rounded up to the estimator rule of thumb of 12.5 to cover cutting.',
     source: 'Standard block-count rule of thumb used by GCC estimators', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_wastage_pct: {
-    value: 5, unit: '%', label: 'Block wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Block wastage', group: 'wastage', used: true,
     rationale: 'Breakage and cutting at corners and openings.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -60,37 +60,37 @@ export const DEFAULTS = {
 
   /* --- Section 2: wall geometry --- */
   wall_height_default_m: {
-    value: 3.0, unit: 'm', label: 'Default wall height', group: 'walls',
+    value: 3.0, unit: 'm', label: 'Default wall height', group: 'walls', used: false,
     rationale: 'Typical Muscat villa floor-to-floor height.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   ext_wall_perimeter_factor: {
-    value: 1.0, unit: '-', label: 'External wall length factor (take-off method)', group: 'walls',
+    value: 1.0, unit: '-', label: 'External wall length factor (take-off method)', group: 'walls', used: false,
     rationale: 'External wall length equals the building perimeter. Superseded for this calculator by ext_perimeter_shape_factor (section 7), which derives the perimeter from floor area; kept here for traceability.',
     source: 'Standard quantity take-off method', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   int_wall_per_room_factor: {
-    value: 0.5, unit: '-', label: 'Internal wall length per space', group: 'walls',
+    value: 0.5, unit: '-', label: 'Internal wall length per space', group: 'walls', used: true,
     rationale: 'Internal wall length is about 0.5 x (length + width) per space — two shared walls per space on average, which avoids counting a shared wall twice.',
     source: 'Rule of thumb used in early-stage GCC villa BOQs', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   opening_deduction_pct: {
-    value: 15, unit: '%', label: 'Doors and windows deducted from wall area', group: 'walls',
+    value: 15, unit: '%', label: 'Doors and windows deducted from wall area', group: 'walls', used: true,
     rationale: 'Typical doors plus windows as a share of gross wall area for a villa (10-20% range).',
     source: 'Common GCC estimating rule of thumb', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   ext_wall_thickness_mm: {
-    value: 200, unit: 'mm', label: 'External wall thickness', group: 'walls',
+    value: 200, unit: 'mm', label: 'External wall thickness', group: 'walls', used: false,
     rationale: 'Same as block_ext_thickness.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   int_wall_thickness_mm: {
-    value: 150, unit: 'mm', label: 'Internal wall thickness', group: 'walls',
+    value: 150, unit: 'mm', label: 'Internal wall thickness', group: 'walls', used: false,
     rationale: 'Same as block_int_thickness.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -98,43 +98,43 @@ export const DEFAULTS = {
 
   /* --- Section 3: concrete --- */
   concrete_m3_per_m2_footings_tiebeams: {
-    value: 0.06, unit: 'm3/m2', label: 'Concrete for footings and tie beams', group: 'concrete',
+    value: 0.06, unit: 'm3/m2', label: 'Concrete for footings and tie beams', group: 'concrete', used: true,
     rationale: 'Isolated pad footings plus a ground-beam allowance, ground floor only.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_columns: {
-    value: 0.025, unit: 'm3/m2 per floor', label: 'Concrete for columns', group: 'concrete',
+    value: 0.025, unit: 'm3/m2 per floor', label: 'Concrete for columns', group: 'concrete', used: true,
     rationale: 'Typical column volume for a villa grid (4-5 m spans, 250x250 to 300x300 columns).',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_beams: {
-    value: 0.045, unit: 'm3/m2 per floor', label: 'Concrete for beams', group: 'concrete',
+    value: 0.045, unit: 'm3/m2 per floor', label: 'Concrete for beams', group: 'concrete', used: true,
     rationale: 'Typical tie and floor beam volume for villa spans.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   slab_thickness_m: {
-    value: 0.15, unit: 'm', label: 'Slab thickness', group: 'concrete',
-    rationale: 'Standard villa solid slab thickness (125-150 mm range).',
+    value: 0.15, unit: 'm', label: 'Slab thickness', group: 'concrete', used: true,
+    rationale: 'Standard villa solid slab thickness (125-150 mm range). This is the editable number; the concrete per m2 of slab is derived from it.',
     source: 'Common GCC villa structural spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_slab: {
-    value: 0.15, unit: 'm3/m2 per floor', label: 'Concrete for floor and roof slabs', group: 'concrete',
-    rationale: 'Slab thickness x 1 m2.',
+    value: 0.15, unit: 'm3/m2 per floor', label: 'Concrete for floor and roof slabs', group: 'concrete', used: false,
+    rationale: 'Derived, not separately editable: slab_thickness_m x 1 m2. Change the slab thickness instead and this follows it.',
     source: 'Direct geometry', sourceUrl: null,
     confidence: 'Certain', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_ground_slab: {
-    value: 0.10, unit: 'm3/m2', label: 'Concrete for the ground slab', group: 'concrete',
+    value: 0.10, unit: 'm3/m2', label: 'Concrete for the ground slab', group: 'concrete', used: true,
     rationale: 'Ground floor plinth and blinding slab, ground floor only.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_wastage_pct: {
-    value: 5, unit: '%', label: 'Concrete wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Concrete wastage', group: 'wastage', used: true,
     rationale: 'Spillage, over-excavation and formwork tolerance.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -142,31 +142,37 @@ export const DEFAULTS = {
 
   /* --- Section 4: rebar steel --- */
   rebar_kg_per_m3_footings: {
-    value: 80, unit: 'kg/m3', label: 'Steel in footings', group: 'steel',
+    value: 80, unit: 'kg/m3', label: 'Steel in footings', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 60-100 kg/m3 range for isolated footings.',
     source: 'General RC design rule of thumb (regional structural practice)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_columns: {
-    value: 150, unit: 'kg/m3', label: 'Steel in columns', group: 'steel',
+    value: 150, unit: 'kg/m3', label: 'Steel in columns', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 120-180 kg/m3 range for villa columns.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_beams: {
-    value: 130, unit: 'kg/m3', label: 'Steel in beams', group: 'steel',
+    value: 130, unit: 'kg/m3', label: 'Steel in beams', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 100-160 kg/m3 range for beams.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_slabs: {
-    value: 90, unit: 'kg/m3', label: 'Steel in slabs', group: 'steel',
-    rationale: 'Mid-point of the typical 70-110 kg/m3 range for solid slabs. Also used for the ground slab mesh — see the ground slab comment in estimate().',
+    value: 90, unit: 'kg/m3', label: 'Steel in slabs', group: 'steel', used: true,
+    rationale: 'Mid-point of the typical 70-110 kg/m3 range for solid slabs.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
+  rebar_kg_per_m3_ground_slab: {
+    value: 50, unit: 'kg/m3', label: 'Steel in the ground slab', group: 'steel', used: true,
+    rationale: 'A ground-bearing slab carries a light mesh, not a suspended-slab cage; typical 40-60 kg/m3.',
+    source: 'General RC practice for ground-bearing slabs', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
   rebar_wastage_pct: {
-    value: 5, unit: '%', label: 'Steel wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Steel wastage', group: 'wastage', used: true,
     rationale: 'Offcuts and laps.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -174,43 +180,43 @@ export const DEFAULTS = {
 
   /* --- Section 5: prices (starting points, not quotes) --- */
   price_omr_block_200: {
-    value: 0.250, unit: 'OMR/pc', label: 'Price per 200 mm block', group: 'prices',
+    value: 0.250, unit: 'OMR/pc', label: 'Price per 200 mm block', group: 'prices', used: true,
     rationale: 'No live listed price found; estimated from the typical GCC 200 mm hollow block range (about 0.200-0.300 OMR/pc).',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_block_150: {
-    value: 0.190, unit: 'OMR/pc', label: 'Price per 150 mm block', group: 'prices',
+    value: 0.190, unit: 'OMR/pc', label: 'Price per 150 mm block', group: 'prices', used: true,
     rationale: 'Same as above; a 150 mm block is typically 20-25% cheaper than a 200 mm one.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_rebar_tonne: {
-    value: 260, unit: 'OMR/tonne', label: 'Price per tonne of rebar steel', group: 'prices',
+    value: 260, unit: 'OMR/tonne', label: 'Price per tonne of rebar steel', group: 'prices', used: true,
     rationale: 'Domestic Oman rebar reported at OMR 253-259 per tonne; delivered price runs higher for small orders.',
     source: 'Al Yusr International — Rebar Prices in Oman', sourceUrl: 'https://alyusroman.com/rebar-price-oman/',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   price_omr_readymix_c30_m3: {
-    value: 32, unit: 'OMR/m3', label: 'Price per m3 of C30 ready-mix concrete', group: 'prices',
+    value: 32, unit: 'OMR/m3', label: 'Price per m3 of C30 ready-mix concrete', group: 'prices', used: true,
     rationale: 'No Oman figure could be sourced; estimated from the typical GCC C30 ready-mix range (28-38 OMR/m3).',
     source: 'Could not source a live Oman price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_cement_bag_50kg: {
-    value: 1.900, unit: 'OMR/bag', label: 'Price per 50 kg cement bag', group: 'prices',
+    value: 1.900, unit: 'OMR/bag', label: 'Price per 50 kg cement bag', group: 'prices', used: false,
     rationale: 'Recent Oman buyer target range of 1.8-2.0 OMR per 50 kg bag. Shown for reference; mortar is not counted in v1.',
     source: 'go4WorldBusiness — Cement Bags Buyers, Oman', sourceUrl: 'https://www.go4worldbusiness.com/buyers/worldwide/cement-bags.html',
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_sand_m3: {
-    value: 6, unit: 'OMR/m3', label: 'Price per m3 of sand', group: 'prices',
+    value: 6, unit: 'OMR/m3', label: 'Price per m3 of sand', group: 'prices', used: false,
     rationale: 'Not sourced for Oman specifically; typical GCC building-sand price. Shown for reference; mortar is not counted in v1.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_aggregate_m3: {
-    value: 7, unit: 'OMR/m3', label: 'Price per m3 of aggregate', group: 'prices',
+    value: 7, unit: 'OMR/m3', label: 'Price per m3 of aggregate', group: 'prices', used: false,
     rationale: 'Not sourced for Oman specifically; typical GCC coarse-aggregate price. Shown for reference; ready-mix already includes aggregate.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
@@ -218,7 +224,7 @@ export const DEFAULTS = {
 
   /* --- Section 7: orchestrator amendments (these override section 6's headline numbers) --- */
   ext_perimeter_shape_factor: {
-    value: 1.15, unit: '-', label: 'Building shape factor for external wall length', group: 'walls',
+    value: 1.15, unit: '-', label: 'Building shape factor for external wall length', group: 'walls', used: true,
     rationale: 'External wall length = factor x 4 x square root of floor area. 1.0 is a perfect square, about 1.02 a 1.5:1 rectangle, 1.2-1.3 an L-shaped villa.',
     source: 'Geometry; the villa-shape allowance is a rule of thumb', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
@@ -436,8 +442,22 @@ function resolveValues(overrides) {
     if (v < 0) {
       throw new Error('Your value for "' + DEFAULTS[key].label + '" cannot be negative.');
     }
+    if (!DEFAULTS[key].used) {
+      /* Golden rule, second half: anything the user can edit must actually change the answer.
+       * Reference-only rows (block sizes, wall thicknesses, mortar materials, the superseded
+       * perimeter factor, the derived slab volume) are shown read-only, so an override of one
+       * would be silently ignored — we refuse it instead. */
+      throw new Error('"' + DEFAULTS[key].label + '" is reference only and is not used in the v1 calculation, so it cannot be changed.');
+    }
     values[key] = v;
   }
+  return values;
+}
+
+/* Derived values follow the row they come from rather than being edited on their own. */
+function applyDerived(values) {
+  /* concrete_m3_per_m2_slab = slab_thickness_m x 1 m2 */
+  values.concrete_m3_per_m2_slab = values.slab_thickness_m * 1;
   return values;
 }
 
@@ -445,7 +465,7 @@ function resolveValues(overrides) {
  * traceability promise in docs/CONVENTIONS.md. */
 export function estimate(house, overrides) {
   const h = validateHouse(house);
-  const a = resolveValues(overrides);
+  const a = applyDerived(resolveValues(overrides));
   const wastedBlocks = 1 + a.block_wastage_pct / 100;     /* block_wastage_pct */
   const wastedConcrete = 1 + a.concrete_wastage_pct / 100; /* concrete_wastage_pct */
   const wastedSteel = 1 + a.rebar_wastage_pct / 100;       /* rebar_wastage_pct */
@@ -477,7 +497,8 @@ export function estimate(house, overrides) {
   /* Concrete. Footings and the ground slab are ground-floor only, so they use floorAreaM2 once;
    * columns, beams and slabs repeat on every floor, so they use builtUpAreaM2.
    * Keys: concrete_m3_per_m2_footings_tiebeams, concrete_m3_per_m2_ground_slab,
-   *       concrete_m3_per_m2_columns, concrete_m3_per_m2_beams, concrete_m3_per_m2_slab. */
+   *       concrete_m3_per_m2_columns, concrete_m3_per_m2_beams,
+   *       concrete_m3_per_m2_slab (derived from slab_thickness_m). */
   const rawFootings = floorAreaM2 * a.concrete_m3_per_m2_footings_tiebeams;
   const rawGroundSlab = floorAreaM2 * a.concrete_m3_per_m2_ground_slab;
   const rawColumns = builtUpAreaM2 * a.concrete_m3_per_m2_columns;
@@ -485,10 +506,9 @@ export function estimate(house, overrides) {
   const rawSlabs = builtUpAreaM2 * a.concrete_m3_per_m2_slab;
 
   /* Steel = element concrete BEFORE wastage x that element's rebar_kg_per_m3 x rebar wastage.
-   * Ground slab decision: a ground-bearing slab is lightly reinforced, but it is reinforced — the
-   * worked example in assumptions.md section 6 spreads steel across ALL concrete including the
-   * ground slab, so we apply rebar_kg_per_m3_slabs to it too. Leaving it at zero would put the
-   * sample house below the 11-16 tonne range section 7 expects. */
+   * The ground slab has its own rate, rebar_kg_per_m3_ground_slab (assumptions.md section 7): a
+   * ground-bearing slab carries a light mesh, not a suspended-slab cage, so it is reinforced, but
+   * far more lightly than the floor and roof slabs. */
   const steel = function (m3, kgPerM3) { return m3 * kgPerM3 * wastedSteel; };
 
   const rows = {
@@ -502,7 +522,7 @@ export function estimate(house, overrides) {
     groundSlab: {
       label: 'Ground slab',
       concreteM3: round(rawGroundSlab * wastedConcrete, 2),
-      steelKg: round(steel(rawGroundSlab, a.rebar_kg_per_m3_slabs), 1),
+      steelKg: round(steel(rawGroundSlab, a.rebar_kg_per_m3_ground_slab), 1),
       blocks: 0,
       wastagePct: a.concrete_wastage_pct
     },
@@ -575,7 +595,8 @@ export function estimate(house, overrides) {
       value: a[key],
       unit: d.unit,
       defaultValue: d.value,
-      overridden: a[key] !== d.value,
+      used: d.used,
+      overridden: d.used && a[key] !== d.value,
       source: d.source,
       sourceUrl: d.sourceUrl,
       confidence: d.confidence,

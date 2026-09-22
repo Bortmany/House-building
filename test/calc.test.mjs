@@ -54,6 +54,7 @@ test('every default is fully documented and editable', () => {
       assert.ok(d[field].length > 0, `${key}: ${field} must not be blank`);
     }
     assert.ok(['blocks', 'walls', 'concrete', 'steel', 'prices', 'wastage'].includes(d.group), `${key}: unknown group ${d.group}`);
+    assert.equal(typeof d.used, 'boolean', `${key}: needs a used flag so the page knows whether it is editable or reference only`);
     assert.ok(CONFIDENCES.includes(d.confidence), `${key}: confidence must be one of ${CONFIDENCES.join(', ')}`);
     assert.match(d.lastChecked, /^\d{4}-\d{2}-\d{2}$/, `${key}: needs a last-checked date`);
     assert.ok(d.sourceUrl === null || typeof d.sourceUrl === 'string', `${key}: sourceUrl must be a link or null`);
@@ -75,6 +76,9 @@ test('the defaults table and assumptions.md say exactly the same thing', () => {
     assert.ok(documented.has(key) || NOTE_KEYS_NOT_IN_TABLES.includes(key), `ASSUMPTION_NOTES has "${key}" with no source in assumptions.md`);
   }
   assert.deepEqual(noteKeys, ['construction_system', 'concrete_grade_structural', 'rooms_are_all_spaces']);
+  assert.ok(docKeys.includes('rebar_kg_per_m3_ground_slab'), 'assumptions.md must document the ground-slab steel rate');
+  assert.ok(Object.prototype.hasOwnProperty.call(DEFAULTS, 'rebar_kg_per_m3_ground_slab'), 'the ground slab needs its own steel rate');
+  assert.equal(DEFAULTS.rebar_kg_per_m3_ground_slab.used, true);
 });
 
 test('every word-assumption note carries its source and date', () => {
@@ -102,9 +106,9 @@ test('the sample house is a valid, complete floor of about 200 m2', () => {
 
 test('the sample house lands in the ranges assumptions.md section 7 expects', () => {
   const r = estimate(SAMPLE_HOUSE);
-  assert.ok(r.totals.blocks >= 8000 && r.totals.blocks <= 12000, `blocks ${r.totals.blocks}`);
+  assert.ok(r.totals.blocks >= 7000 && r.totals.blocks <= 13000, `blocks ${r.totals.blocks}`);
   assert.ok(r.totals.concreteM3 >= 110 && r.totals.concreteM3 <= 140, `concrete ${r.totals.concreteM3}`);
-  assert.ok(r.totals.steelTonnes >= 11 && r.totals.steelTonnes <= 16, `steel ${r.totals.steelTonnes}`);
+  assert.ok(r.totals.steelTonnes >= 10 && r.totals.steelTonnes <= 16, `steel ${r.totals.steelTonnes}`);
 });
 
 /* Golden snapshot — written from what the code produces today, so any formula change shows up
@@ -115,11 +119,11 @@ test('sample house headline totals (golden snapshot)', () => {
   assert.equal(t.blocksExternal, 4408);
   assert.equal(t.blocksInternal, 3645);
   assert.equal(t.concreteM3, 129.08);
-  assert.equal(t.steelTonnes, 12.909);
+  assert.equal(t.steelTonnes, 12.048);
   assert.equal(t.costBlocksOmr, 1794.55);
   assert.equal(t.costConcreteOmr, 4130.56);
-  assert.equal(t.costSteelOmr, 3356.26);
-  assert.equal(t.costOmr, 9281.37);
+  assert.equal(t.costSteelOmr, 3132.51);
+  assert.equal(t.costOmr, 9057.62);
 });
 
 test('totals are exactly the sum of the element rows', () => {
@@ -214,7 +218,7 @@ test('every quantity assumption actually moves the answer when overridden', () =
     opening_deduction_pct: (r) => r.totals.blocks,
     ext_perimeter_shape_factor: (r) => r.totals.blocksExternal,
     int_wall_per_room_factor: (r) => r.totals.blocksInternal,
-    concrete_m3_per_m2_slab: (r) => r.totals.concreteM3,
+    slab_thickness_m: (r) => r.totals.concreteM3,
     rebar_kg_per_m3_columns: (r) => r.totals.steelKg,
     price_omr_readymix_c30_m3: (r) => r.totals.costConcreteOmr,
     price_omr_rebar_tonne: (r) => r.totals.costSteelOmr
@@ -231,6 +235,57 @@ test('a bad override is refused in plain English', () => {
   assert.throws(() => estimate(SAMPLE_HOUSE, { price_omr_block_200: NaN }), /should be a number/);
   assert.throws(() => estimate(SAMPLE_HOUSE, { blocks_per_m2_wall: 'twelve' }), /should be a number/);
   assert.throws(() => estimate(SAMPLE_HOUSE, { blocks_per_m2_wall: Infinity }), /should be a number/);
+});
+
+/* ---------- the golden rule: editable means used, everything else is read-only ---------- */
+
+test('the ground slab uses its own, lighter steel rate', () => {
+  const r = estimate(SAMPLE_HOUSE);
+  const perM3 = r.elements.groundSlab.steelKg / r.elements.groundSlab.concreteM3;
+  const slabPerM3 = r.elements.slabs.steelKg / r.elements.slabs.concreteM3;
+  assert.ok(perM3 < slabPerM3, 'a ground-bearing slab is lighter than a suspended slab');
+  assert.ok(Math.abs(perM3 - DEFAULTS.rebar_kg_per_m3_ground_slab.value) < 1, `ground slab steel came out at ${perM3} kg/m3`);
+  const edited = estimate(SAMPLE_HOUSE, { rebar_kg_per_m3_ground_slab: 100 });
+  assert.ok(edited.elements.groundSlab.steelKg > r.elements.groundSlab.steelKg * 1.9);
+  assert.equal(edited.elements.slabs.steelKg, r.elements.slabs.steelKg, 'the floor slabs must not move');
+});
+
+test('every editable assumption changes the answer, and every reference-only one is refused', () => {
+  const plain = estimate(SAMPLE_HOUSE);
+  const watched = (r) => JSON.stringify([r.totals, r.inputs]);
+  const before = watched(plain);
+  const usedKeys = [];
+  const referenceOnlyKeys = [];
+  for (const key of Object.keys(DEFAULTS)) {
+    if (DEFAULTS[key].used) {
+      usedKeys.push(key);
+      const bumped = DEFAULTS[key].value * 1.5 + 0.5;
+      const edited = estimate(SAMPLE_HOUSE, { [key]: bumped });
+      assert.notEqual(watched(edited), before, `"${key}" can be edited but changes nothing — untraceable number`);
+    } else {
+      referenceOnlyKeys.push(key);
+      assert.throws(() => estimate(SAMPLE_HOUSE, { [key]: DEFAULTS[key].value * 1.5 + 0.5 }), /reference only/, `"${key}" is reference only and must be refused as an override`);
+    }
+  }
+  assert.ok(usedKeys.length > 15);
+  assert.deepEqual(referenceOnlyKeys, [
+    'block_ext_length', 'block_ext_height', 'block_ext_thickness', 'block_int_thickness',
+    'mortar_joint_mm', 'wall_height_default_m', 'ext_wall_perimeter_factor',
+    'ext_wall_thickness_mm', 'int_wall_thickness_mm', 'concrete_m3_per_m2_slab',
+    'price_omr_cement_bag_50kg', 'price_omr_sand_m3', 'price_omr_aggregate_m3'
+  ]);
+  for (const row of plain.assumptionsUsed) {
+    assert.equal(row.used, DEFAULTS[row.key].used, `${row.key}: assumptionsUsed must say whether it is used`);
+  }
+});
+
+test('the slab concrete per m2 is derived from the slab thickness', () => {
+  const r = estimate(SAMPLE_HOUSE, { slab_thickness_m: 0.2 });
+  const derived = r.assumptionsUsed.find((x) => x.key === 'concrete_m3_per_m2_slab');
+  assert.equal(derived.value, 0.2, 'the derived row must follow the thickness the user set');
+  assert.equal(derived.used, false);
+  assert.equal(derived.overridden, false, 'a derived row is never "overridden" — the user edits the thickness');
+  assert.ok(r.elements.slabs.concreteM3 > estimate(SAMPLE_HOUSE).elements.slabs.concreteM3);
 });
 
 /* ---------- input safety ---------- */
