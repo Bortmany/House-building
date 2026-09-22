@@ -84,3 +84,8 @@ No server, no database, no accounts — everything lives in the browser tab and 
 1. **Do all floors share the same room list, or can each floor differ?** Suggested default: v1 assumes every floor repeats the same room list the user enters once (simplest to build and matches most small villas); a later version could add "different layout per floor." 
 2. **What happens to the auto-generated room list from the m² shortcut — is it just a starting point the user edits, or does changing it back to a plain m² number regenerate and discard edits?** Suggested default: it's a one-time starting point; once generated, the user edits it like any manually-typed list, and there's no "regenerate" button in v1 (avoids losing edits by surprise).
 3. **Should the price table let the user pick a currency other than OMR?** Suggested default: no — OMR only in v1, since this is for an Oman/GCC self-builder audience per the researcher's brief; a currency switch is easy to add later if asked.
+
+
+## Amendment (after code review, 2026-09-22)
+
+Wastage is per material (blocks, concrete, rebar), not per element — three named assumptions, edited in the assumptions panel; the breakdown table shows them read-only. Assumptions that do not drive v1 maths are shown read-only as "reference only".

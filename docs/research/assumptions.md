@@ -123,9 +123,18 @@ consistent and traceable:
 | key | value | unit | rationale | source | confidence | last_checked |
 |---|---|---|---|---|---|---|
 | rooms_are_all_spaces | true | rule | the room list must include EVERY space on a floor (majlis, living, kitchen, bedrooms, bathrooms, corridors/hall); floor area = sum of room areas, so the m² shortcut must generate spaces that sum to the entered m² | Quantity take-off practice — walls exist around every space, not only "rooms" | Certain | 2026-09-22 |
+| rebar_kg_per_m3_ground_slab | 50 | kg/m³ | ground-bearing slab carries a light mesh, not a suspended-slab cage; typical 40–60 kg/m³ | General RC practice for ground-bearing slabs (code-review finding, 2026-09-22) | Guessing | 2026-09-22 |
 | ext_perimeter_shape_factor | 1.15 | — | external wall length = factor × 4 × √(floor area); 1.0 is a square, ~1.02 a 1.5:1 rectangle, L-shaped villas 1.2–1.3 | Geometry; villa-shape allowance is a rule of thumb | Guessing | 2026-09-22 |
 
 `int_wall_per_room_factor` (0.5 × (L+W) per space) stays, now applied over all spaces.
 Section 6's headline numbers are therefore superseded by the calculator's own sample house
 (all spaces listed); the test suite pins that sample and checks it lands in sane ranges
-(roughly 8,000–12,000 blocks, 110–140 m³ concrete, 11–16 t steel for a 400 m² villa).
+(roughly 7,000–13,000 blocks, 110–140 m³ concrete, 10–16 t steel for a 400 m² villa — a
+"Guessing"-grade sanity band; the exact golden snapshot in the tests is what catches formula drift).
+
+**Used vs reference-only.** Only some rows drive v1 maths. Rows that are documentation of the
+system (block dimensions, mortar joint, wall thicknesses, default wall height, the superseded
+`ext_wall_perimeter_factor`, and the cement/sand/aggregate prices since mortar is out of scope)
+are carried for traceability and must be shown read-only, marked "reference only — not used in
+v1", never as editable overrides. `concrete_m3_per_m2_slab` is derived from `slab_thickness_m`
+(Certain, geometry) and is not separately editable.
