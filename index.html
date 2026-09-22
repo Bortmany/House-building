@@ -937,6 +937,18 @@ function estimate(house, overrides) {
     "finishedAt": "2026-09-22T07:38:36.256Z",
     "outcome": "page + build script green; smoke PASS 1440/390; wastage column read-only by design",
     "file": "04b-builder"
+  },
+  {
+    "order": 5,
+    "agent": "verifier",
+    "model": "haiku",
+    "round": 1,
+    "startedAt": "2026-09-22T07:38:50.361Z",
+    "prompt": "Repo: /home/user/House-building. Read docs/CONVENTIONS.md and run its \"Verify recipe\" section exactly, in order, from the repo root:\n1. node --test test/*.mjs\n2. node scripts/build.mjs\n3. git diff --exit-code -- index.html\n4. node scripts/smoke.mjs\nReport one line per step: PASS or FAIL, and for a FAIL the exact error output (verbatim, trimmed to what matters). Do not fix anything, do not edit any file. If step 2 changes index.html, that is a FAIL of step 3 — show the diff stat.\n",
+    "report": "Step 1 (node --test test/*.mjs): PASS\nStep 2 (node scripts/build.mjs): PASS\nStep 3 (git diff --exit-code -- index.html): FAIL — build appended a new verifier record to the build log in index.html. Diff stat: 1 file changed, 9 insertions(+).\nStep 4 (node scripts/smoke.mjs): PASS\n\nVerifier's analysis: the build script automatically logs all runs to index.html's embedded build-log; it should not log verification runs, or the recipe should exclude build-log entries.\n\nOrchestrator correction: that analysis is wrong — the build script logs nothing. The orchestrator wrote the verifier's own dispatch record (05-verifier.json) to docs/build-log AFTER committing index.html, so the committed page was one record behind. Process fix: every time a dispatch record is written, rebuild and commit index.html with it. No code change needed; re-check below.\n",
+    "finishedAt": "2026-09-22T07:40:14.526Z",
+    "outcome": "3/4 PASS; step 3 failed on orchestrator sequencing, not code; fixed by rebuilding after every log write",
+    "file": "05-verifier"
   }
 ]</script>
 <script>
