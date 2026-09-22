@@ -949,6 +949,15 @@ function estimate(house, overrides) {
     "finishedAt": "2026-09-22T07:40:14.526Z",
     "outcome": "3/4 PASS; step 3 failed on orchestrator sequencing, not code; fixed by rebuilding after every log write",
     "file": "05-verifier"
+  },
+  {
+    "order": 6,
+    "agent": "code-reviewer",
+    "model": "opus",
+    "round": 1,
+    "startedAt": "2026-09-22T07:40:37.425Z",
+    "prompt": "Repo: /home/user/House-building. Review the whole repo as one diff (it is a new project: `git log --oneline` shows every commit; review the current tree, i.e. `git diff --stat $(git rev-list --max-parents=0 HEAD) HEAD` scope). Read first, in this order: docs/CONVENTIONS.md — its golden rule leads your review: **every number on screen is traceable to a named assumption in docs/research/assumptions.md; prices are never hard-coded outside the editable DEFAULTS table; a user override must be what the calculation uses** — then /home/user/Agents/docs/engineering-standards.md sections 1 (input safety) and 7 (core-guarantee tests), then docs/research/assumptions.md, docs/specs/estimator.md, docs/specs/estimator-ui.md.\n\nFiles under review: src/calc.js, test/calc.test.mjs, src/page.html, scripts/build.mjs, scripts/smoke.mjs, scripts/log-dispatch.mjs. index.html is generated — check only that it is byte-identical to a fresh `node scripts/build.mjs` (do not edit anything; you are read-only).\n\nPriorities, in order:\n1. Real bugs and safety: any way the page shows NaN/Infinity/undefined; any input (form field, override, build-log record text) that reaches innerHTML unescaped (prompts and reports contain \u003c > ` and quotes); any formula in calc.js that disagrees with assumptions.md or with its own traceability comment; any path where an override is accepted but not used; the build script's `export ` stripping producing invalid classic-script (e.g. a line inside a string or comment starting with \"export \"); idempotency of the build.\n2. Three interpretations builder A made — say explicitly whether each is right: (a) ground slab gets slab rebar rate (not zero); (b) the sample house sits ~0.7% above the 8,000-block test floor — is the test brittle, and if so what is the right fix (widen the range, or change the sample) — a recommendation, not a judgment call for you to apply; (c) wastage per material rather than per element, shown read-only in the breakdown table (builder B's deviation 1).\n3. Golden-rule drift: any number in page.html that isn't from estimate()/DEFAULTS; any DEFAULTS row missing source/lastChecked/confidence.\n4. Test gaps against the standards' \"core guarantee\": what is the one or two most valuable missing tests?\n5. Convention nits last, and only ones that contradict CONVENTIONS.md — not style preferences.\n\nFinal message (plain English, under 30 lines): a verdict line (SHIP / FIX FIRST), then findings ranked, each with file:line, why it matters, and the one-line fix; then your answers to 2(a)(b)(c); then the test gaps. Say which findings are golden-rule violations (never negotiable) versus judgment calls.\n",
+    "file": "06-code-reviewer"
   }
 ]</script>
 <script>
