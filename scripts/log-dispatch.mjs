@@ -5,7 +5,7 @@ const [nn, agent, model, round, promptFile, reportFile, outcome] = process.argv.
 const p = `docs/build-log/${nn}-${agent}.json`;
 const prev = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
 const rec = {
-  ...prev, order: Number(nn), agent, model, round: Number(round),
+  ...prev, order: parseInt(nn, 10), agent, model, round: Number(round),
   startedAt: prev.startedAt ?? new Date().toISOString(),
   prompt: promptFile ? fs.readFileSync(promptFile, 'utf8') : prev.prompt,
 };

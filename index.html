@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>House Material Estimator</title>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-muted:#eef1f5;
+  --text:#14181f; --text-muted:#535c6b;
+  --border:#d5dae1;
+  --accent:#2563a8; --accent-contrast:#ffffff;
+  --danger:#b3261e; --success:#1c6b48; --overridden:#8a5a00;
+  --badge-haiku:#0f6f63; --badge-sonnet:#3b4fb0; --badge-opus:#7a3ba0;
+  --radius:12px; --shadow-1:0 1px 3px rgba(16,24,40,.10),0 1px 2px rgba(16,24,40,.06);
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px;
+  --content-max:960px;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15181d; --surface:#1e232b; --surface-muted:#262c35;
+    --text:#f1f3f6; --text-muted:#aeb7c4;
+    --border:#39414c;
+    --accent:#6fa8e6; --accent-contrast:#10141a;
+    --danger:#e8867c; --success:#6fc39b; --overridden:#e0b25f;
+    --badge-haiku:#4fc0b2; --badge-sonnet:#8fa0f0; --badge-opus:#9a63c4;
+    --shadow-1:0 1px 3px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:var(--content-max);margin:0 auto;padding:var(--space-5) var(--space-4) var(--space-6)}
+h1{font-size:28px;line-height:1.2;margin:0 0 var(--space-2)}
+h2{font-size:22px;line-height:1.25;margin:var(--space-6) 0 var(--space-3)}
+h3{font-size:17px;margin:0 0 var(--space-3)}
+h4{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin:var(--space-4) 0 var(--space-2)}
+p{margin:0 0 var(--space-3)}
+a{color:var(--accent)}
+.lede{color:var(--text-muted);margin-bottom:var(--space-5)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4);box-shadow:var(--shadow-1);margin-bottom:var(--space-5)}
+.muted{color:var(--text-muted);font-size:14px}
+.stack{display:flex;flex-direction:column;gap:var(--space-5)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:var(--space-1)}
+.field{display:flex;align-items:center;gap:var(--space-2)}
+.field input{flex:1 1 auto;min-width:0}
+input[type=number],input[type=text]{width:100%;min-height:44px;padding:10px var(--space-3);font-size:16px;font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px}
+input:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.unit{font-size:14px;color:var(--text-muted);white-space:nowrap}
+.field-error input{border-color:var(--danger);border-left:4px solid var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
+.field-msg{display:block;visibility:hidden;min-height:1.4em;color:var(--danger);font-size:14px;margin-top:var(--space-1)}
+.field-error .field-msg{visibility:visible}
+button{font-family:inherit;font-size:16px;min-height:44px;padding:10px var(--space-4);border-radius:8px;border:1px solid var(--border);background:var(--surface-muted);color:var(--text);cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:600;width:100%}
+.btn-ghost{background:transparent;font-size:14px;padding:8px var(--space-3)}
+.btn-row{display:flex;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-5)}
+.btn-row .btn-primary{flex:2 1 220px;width:auto}
+.btn-row .btn-secondary{flex:1 1 180px}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin:var(--space-5) 0 var(--space-2)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:var(--space-2) var(--space-2);border-bottom:1px solid var(--border);font-size:15px;vertical-align:middle}
+th{font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:none}
+details{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-1)}
+summary{list-style:none;cursor:pointer;padding:var(--space-4);min-height:44px;display:flex;align-items:center;gap:var(--space-3);font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary .chev{transition:transform .15s ease;color:var(--text-muted)}
+details[open]>summary .chev{transform:rotate(180deg)}
+.details-body{padding:0 var(--space-4) var(--space-4)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);white-space:nowrap}
+.badge-Certain{color:var(--success);border-color:var(--success)}
+.badge-Likely{color:var(--accent);border-color:var(--accent)}
+.badge-Guessing{color:var(--overridden);border-color:var(--overridden)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;white-space:nowrap}
+.pill-haiku{background:var(--badge-haiku)}.pill-sonnet{background:var(--badge-sonnet)}.pill-opus{background:var(--badge-opus)}
+.pill-round{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.a-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:var(--space-2) var(--space-3);align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border)}
+.a-row:last-child{border-bottom:none}
+.a-meta{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;font-size:13px;color:var(--text-muted)}
+.dot-overridden{display:none;font-size:12px;font-weight:700;color:var(--overridden)}
+.a-row.overridden .dot-overridden{display:inline}
+.add-room-bottom{display:none}
+.notes-list{margin:var(--space-3) 0 0;padding-left:var(--space-5);color:var(--text-muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3)}
+.stat{background:var(--surface-muted);border-radius:10px;padding:var(--space-3)}
+.stat-label{font-size:13px;color:var(--text-muted)}
+.stat-value{font-size:30px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-word}
+.stat-unit{font-size:13px;color:var(--text-muted)}
+#results-error{border-left:4px solid var(--danger)}
+#results-error .err-msg{color:var(--danger);font-weight:600}
+.timeline{position:relative;padding-left:var(--space-5)}
+.timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:var(--space-4)}
+.tl-item::before{content:"";position:absolute;left:calc(-1 * var(--space-5) + 2px);top:18px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.tl-sum{flex-wrap:wrap}
+.tl-outcome{flex:1 1 180px;min-width:0;font-weight:400;color:var(--text-muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk-label{font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin:var(--space-3) 0 var(--space-1)}
+.prompt-box{font-family:var(--font-mono);font-size:13px;line-height:1.45;background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:var(--space-3);max-height:260px;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;word-break:break-word;max-width:100%}
+.report-box{white-space:pre-wrap;word-break:break-word;font-size:15px}
+.org{display:flex;flex-direction:column;align-items:center;gap:var(--space-2)}
+.org-box{background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:var(--space-2) var(--space-3);font-size:14px;text-align:center}
+.org-top{font-weight:700}
+.org-line{width:2px;height:16px;background:var(--border)}
+.org-children{display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:center;max-width:100%}
+.org-children .org-box{display:flex;align-items:center;gap:var(--space-2)}
+[hidden]{display:none !important}
+@media (max-width:700px){
+  h1{font-size:24px}
+  .wrap{padding:var(--space-4) var(--space-3) var(--space-6)}
+  .grid-3{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat-value{font-size:26px}
+  .btn-row{flex-direction:column}
+  .btn-row .btn-primary,.btn-row .btn-secondary{width:100%;flex:1 1 auto}
+  table.responsive thead{display:none}
+  table.responsive,table.responsive tbody,table.responsive tr,table.responsive td,table.responsive tfoot{display:block;width:100%}
+  table.responsive tr{background:var(--surface-muted);border:1px solid var(--border);border-radius:10px;padding:var(--space-3);margin-bottom:var(--space-3)}
+  table.responsive td{border-bottom:none;padding:var(--space-1) 0;display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);text-align:right}
+  table.responsive td::before{content:attr(data-label);font-size:13px;color:var(--text-muted);text-align:left;font-weight:600}
+  table.responsive td.cell-full{display:block;text-align:left}
+  table.responsive td.cell-full::before{display:block;margin-bottom:var(--space-1)}
+  .add-room-bottom{display:block}
+  .a-row{grid-template-columns:1fr}
+  .org-children{flex-direction:column;align-items:stretch}
+  .timeline{padding-left:var(--space-4)}
+  .tl-item::before{left:calc(-1 * var(--space-4) + 1px)}
+  .tl-outcome{white-space:normal;flex-basis:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="estimator">
+  <h1>House material estimator</h1>
+  <p class="lede">Rough quantities of blocks, ready-mix concrete and rebar steel for a villa, with an
+  OMR cost built from prices you can change. Everything runs in this page — nothing is sent anywhere.</p>
+
+  <div class="card">
+    <h3>Your house</h3>
+    <div class="grid-3">
+      <div id="floors-field">
+        <label for="floors-input">Number of floors</label>
+        <div class="field"><input type="number" id="floors-input" inputmode="numeric"><span class="unit">floors</span></div>
+        <p class="field-msg" id="floors-msg"></p>
+      </div>
+      <div id="wall-height-field">
+        <label for="wall-height-input">Wall height</label>
+        <div class="field"><input type="number" id="wall-height-input" inputmode="decimal"><span class="unit">m</span></div>
+        <p class="field-msg" id="wall-height-msg"></p>
+      </div>
+      <div id="m2-field">
+        <label for="m2-shortcut-toggle">Quick shortcut</label>
+        <div class="field" style="align-items:flex-start">
+          <input type="checkbox" id="m2-shortcut-toggle" style="width:24px;height:24px;min-height:24px;flex:0 0 auto;margin-top:10px">
+          <span class="unit" style="white-space:normal">I don't want to type rooms — just use approximate size.</span>
+        </div>
+        <div id="m2-value-wrap" hidden>
+          <label for="m2-shortcut-value">Approximate size per floor</label>
+          <div class="field"><input type="number" id="m2-shortcut-value" inputmode="decimal"><span class="unit">m²</span></div>
+          <p class="field-msg" id="m2-msg"></p>
+          <p class="muted">This creates a starting room list you can edit — changing the size again won't overwrite your edits.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="rooms-block">
+      <div class="subhead">
+        <h3 style="margin:0">Rooms and spaces</h3>
+        <button type="button" data-action="add-room" class="btn-ghost">+ Add room</button>
+      </div>
+      <p class="muted">List every space on the floor — majlis, living, kitchen, bedrooms, bathrooms, hall —
+      because walls run around all of them. The same list is used for each floor.</p>
+      <table class="responsive" id="room-list-table">
+        <thead><tr><th>Room or space</th><th class="num">Length</th><th class="num">Width</th><th></th></tr></thead>
+        <tbody id="room-list"></tbody>
+      </table>
+      <p class="field-msg" id="rooms-msg"></p>
+      <button type="button" data-action="add-room" class="btn-ghost add-room-bottom" style="width:100%;margin-top:var(--space-3)">+ Add room</button>
+    </div>
+  </div>
+
+  <details id="assumptions-panel">
+    <summary><span class="chev">▾</span><span>Assumptions &amp; prices (tap to review or edit)</span></summary>
+    <div class="details-body">
+      <p class="muted">Defaults are sourced construction estimates, not guarantees — see each row's source.</p>
+      <p class="muted"><strong>These are starting-point prices, not quotes — check with your supplier.</strong></p>
+      <div id="assumption-notes"></div>
+      <div class="subhead"><span class="muted">Type over any number to use your own.</span>
+        <button type="button" data-action="reset-all" class="btn-ghost">Reset all to defaults</button></div>
+      <div id="assumptions-rows"></div>
+    </div>
+  </details>
+
+  <div class="btn-row" style="margin-top:var(--space-5)">
+    <button type="button" data-action="calculate" class="btn-primary">Calculate</button>
+    <button type="button" data-action="load-sample" class="btn-secondary">Load sample house</button>
+  </div>
+
+  <div id="results-empty" class="card">
+    <p style="margin:0">Fill in your house details and press Calculate to see quantities.</p>
+  </div>
+
+  <div id="results-error" class="card" hidden>
+    <p class="err-msg" id="results-error-message"></p>
+    <p class="muted" style="margin:0">Fix the highlighted field and press Calculate again.</p>
+  </div>
+
+  <div id="results-success" hidden>
+    <div class="card">
+      <h3>Materials for the whole house</h3>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Total blocks</div><div class="stat-value" data-result="blocks-total">0</div><div class="stat-unit">pcs</div></div>
+        <div class="stat"><div class="stat-label">Ready-mix concrete</div><div class="stat-value" data-result="concrete-total">0</div><div class="stat-unit">m³</div></div>
+        <div class="stat"><div class="stat-label">Rebar steel</div><div class="stat-value" data-result="steel-total" title="">0</div><div class="stat-unit">tonnes</div></div>
+        <div class="stat"><div class="stat-label">Materials cost</div><div class="stat-value" data-result="cost-total">0</div><div class="stat-unit">OMR</div></div>
+      </div>
+      <p class="muted" id="overrides-note" hidden></p>
+      <p class="muted" id="inputs-summary" style="margin-top:var(--space-3)"></p>
+      <ul class="notes-list" id="results-notes"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Breakdown by part of the structure</h3>
+      <div id="breakdown-table"></div>
+      <p class="muted" style="margin-top:var(--space-3)">Wastage is applied already. Change a wastage % in
+      <a href="#assumptions-panel" data-action="open-assumptions">Assumptions &amp; prices</a> and the numbers update.</p>
+    </div>
+
+    <details id="traceability">
+      <summary><span class="chev">▾</span><span>Where every number came from</span></summary>
+      <div class="details-body"><div id="trace-table"></div></div>
+    </details>
+  </div>
+</section>
+
+<section id="build-story">
+  <h2>How this page was built</h2>
+  <div class="card" id="build-story-intro"></div>
+  <div class="card" id="build-story-diagram"></div>
+  <div id="build-story-timeline" class="timeline"></div>
+</section>
+
+</div>
+<script>
+/*
+ * House-building estimator — pure calculation module.
+ *
+ * Golden rule (docs/CONVENTIONS.md): every number this file produces is traceable to a named,
+ * documented row in docs/research/assumptions.md. DEFAULTS below is the ONLY place a price or a
+ * quantity constant lives, every row carries its source, confidence and "last checked" date, and
+ * every row can be overwritten by the user (the `overrides` argument to estimate()).
+ *
+ * No DOM, no network, no imports. This file must also run as a classic <script> after the build
+ * step strips the leading `export ` keyword, so: no import/export-from, no top-level await, and
+ * only `export const` / `export function` at column 0.
+ */
+
+/* Every numeric assumption, in the order the UI shows it.
+ * Keys map 1:1 to docs/research/assumptions.md sections 1-5 and 7. */
+const DEFAULTS = {
+  /* --- Section 1: blocks --- */
+  block_ext_length: {
+    value: 400, unit: 'mm', label: 'External block length', group: 'blocks',
+    rationale: 'Standard GCC hollow block face size (400x200xh).',
+    source: 'Al Madina Cement Products (mcp.om) product range', sourceUrl: 'https://mcp.om',
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  block_ext_height: {
+    value: 200, unit: 'mm', label: 'Block face height', group: 'blocks',
+    rationale: 'Standard block face height.',
+    source: 'Al Madina Cement Products (mcp.om)', sourceUrl: 'https://mcp.om',
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  block_ext_thickness: {
+    value: 200, unit: 'mm', label: 'External wall block thickness', group: 'blocks',
+    rationale: 'Typical external wall block — load path plus insulation mass.',
+    source: 'Common GCC villa spec (Muscat Municipality practice)', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  block_int_thickness: {
+    value: 150, unit: 'mm', label: 'Internal wall block thickness', group: 'blocks',
+    rationale: 'Typical internal partition block, non-load-bearing.',
+    source: 'Common GCC villa spec', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  mortar_joint_mm: {
+    value: 10, unit: 'mm', label: 'Mortar joint thickness', group: 'blocks',
+    rationale: 'Standard bed and head joint.',
+    source: 'General masonry practice (BS 5628 / regional norm)', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  blocks_per_m2_wall: {
+    value: 12.5, unit: 'pcs/m2', label: 'Blocks per square metre of wall', group: 'blocks',
+    rationale: 'A 400x200 block plus a 10 mm joint covers about 0.0861 m2 (11.6 blocks/m2), rounded up to the estimator rule of thumb of 12.5 to cover cutting.',
+    source: 'Standard block-count rule of thumb used by GCC estimators', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  block_wastage_pct: {
+    value: 5, unit: '%', label: 'Block wastage', group: 'wastage',
+    rationale: 'Breakage and cutting at corners and openings.',
+    source: 'Common contractor allowance', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+
+  /* --- Section 2: wall geometry --- */
+  wall_height_default_m: {
+    value: 3.0, unit: 'm', label: 'Default wall height', group: 'walls',
+    rationale: 'Typical Muscat villa floor-to-floor height.',
+    source: 'Common GCC villa spec', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  ext_wall_perimeter_factor: {
+    value: 1.0, unit: '-', label: 'External wall length factor (take-off method)', group: 'walls',
+    rationale: 'External wall length equals the building perimeter. Superseded for this calculator by ext_perimeter_shape_factor (section 7), which derives the perimeter from floor area; kept here for traceability.',
+    source: 'Standard quantity take-off method', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  int_wall_per_room_factor: {
+    value: 0.5, unit: '-', label: 'Internal wall length per space', group: 'walls',
+    rationale: 'Internal wall length is about 0.5 x (length + width) per space — two shared walls per space on average, which avoids counting a shared wall twice.',
+    source: 'Rule of thumb used in early-stage GCC villa BOQs', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  opening_deduction_pct: {
+    value: 15, unit: '%', label: 'Doors and windows deducted from wall area', group: 'walls',
+    rationale: 'Typical doors plus windows as a share of gross wall area for a villa (10-20% range).',
+    source: 'Common GCC estimating rule of thumb', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  ext_wall_thickness_mm: {
+    value: 200, unit: 'mm', label: 'External wall thickness', group: 'walls',
+    rationale: 'Same as block_ext_thickness.',
+    source: 'Common GCC villa spec', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  int_wall_thickness_mm: {
+    value: 150, unit: 'mm', label: 'Internal wall thickness', group: 'walls',
+    rationale: 'Same as block_int_thickness.',
+    source: 'Common GCC villa spec', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+
+  /* --- Section 3: concrete --- */
+  concrete_m3_per_m2_footings_tiebeams: {
+    value: 0.06, unit: 'm3/m2', label: 'Concrete for footings and tie beams', group: 'concrete',
+    rationale: 'Isolated pad footings plus a ground-beam allowance, ground floor only.',
+    source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  concrete_m3_per_m2_columns: {
+    value: 0.025, unit: 'm3/m2 per floor', label: 'Concrete for columns', group: 'concrete',
+    rationale: 'Typical column volume for a villa grid (4-5 m spans, 250x250 to 300x300 columns).',
+    source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  concrete_m3_per_m2_beams: {
+    value: 0.045, unit: 'm3/m2 per floor', label: 'Concrete for beams', group: 'concrete',
+    rationale: 'Typical tie and floor beam volume for villa spans.',
+    source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  slab_thickness_m: {
+    value: 0.15, unit: 'm', label: 'Slab thickness', group: 'concrete',
+    rationale: 'Standard villa solid slab thickness (125-150 mm range).',
+    source: 'Common GCC villa structural spec', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  concrete_m3_per_m2_slab: {
+    value: 0.15, unit: 'm3/m2 per floor', label: 'Concrete for floor and roof slabs', group: 'concrete',
+    rationale: 'Slab thickness x 1 m2.',
+    source: 'Direct geometry', sourceUrl: null,
+    confidence: 'Certain', lastChecked: '2026-09-22'
+  },
+  concrete_m3_per_m2_ground_slab: {
+    value: 0.10, unit: 'm3/m2', label: 'Concrete for the ground slab', group: 'concrete',
+    rationale: 'Ground floor plinth and blinding slab, ground floor only.',
+    source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  concrete_wastage_pct: {
+    value: 5, unit: '%', label: 'Concrete wastage', group: 'wastage',
+    rationale: 'Spillage, over-excavation and formwork tolerance.',
+    source: 'Common contractor allowance', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+
+  /* --- Section 4: rebar steel --- */
+  rebar_kg_per_m3_footings: {
+    value: 80, unit: 'kg/m3', label: 'Steel in footings', group: 'steel',
+    rationale: 'Mid-point of the typical 60-100 kg/m3 range for isolated footings.',
+    source: 'General RC design rule of thumb (regional structural practice)', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  rebar_kg_per_m3_columns: {
+    value: 150, unit: 'kg/m3', label: 'Steel in columns', group: 'steel',
+    rationale: 'Mid-point of the typical 120-180 kg/m3 range for villa columns.',
+    source: 'General RC design rule of thumb', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  rebar_kg_per_m3_beams: {
+    value: 130, unit: 'kg/m3', label: 'Steel in beams', group: 'steel',
+    rationale: 'Mid-point of the typical 100-160 kg/m3 range for beams.',
+    source: 'General RC design rule of thumb', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  rebar_kg_per_m3_slabs: {
+    value: 90, unit: 'kg/m3', label: 'Steel in slabs', group: 'steel',
+    rationale: 'Mid-point of the typical 70-110 kg/m3 range for solid slabs. Also used for the ground slab mesh — see the ground slab comment in estimate().',
+    source: 'General RC design rule of thumb', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  rebar_wastage_pct: {
+    value: 5, unit: '%', label: 'Steel wastage', group: 'wastage',
+    rationale: 'Offcuts and laps.',
+    source: 'Common contractor allowance', sourceUrl: null,
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+
+  /* --- Section 5: prices (starting points, not quotes) --- */
+  price_omr_block_200: {
+    value: 0.250, unit: 'OMR/pc', label: 'Price per 200 mm block', group: 'prices',
+    rationale: 'No live listed price found; estimated from the typical GCC 200 mm hollow block range (about 0.200-0.300 OMR/pc).',
+    source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  price_omr_block_150: {
+    value: 0.190, unit: 'OMR/pc', label: 'Price per 150 mm block', group: 'prices',
+    rationale: 'Same as above; a 150 mm block is typically 20-25% cheaper than a 200 mm one.',
+    source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  price_omr_rebar_tonne: {
+    value: 260, unit: 'OMR/tonne', label: 'Price per tonne of rebar steel', group: 'prices',
+    rationale: 'Domestic Oman rebar reported at OMR 253-259 per tonne; delivered price runs higher for small orders.',
+    source: 'Al Yusr International — Rebar Prices in Oman', sourceUrl: 'https://alyusroman.com/rebar-price-oman/',
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  price_omr_readymix_c30_m3: {
+    value: 32, unit: 'OMR/m3', label: 'Price per m3 of C30 ready-mix concrete', group: 'prices',
+    rationale: 'No Oman figure could be sourced; estimated from the typical GCC C30 ready-mix range (28-38 OMR/m3).',
+    source: 'Could not source a live Oman price; industry-range estimate', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  price_omr_cement_bag_50kg: {
+    value: 1.900, unit: 'OMR/bag', label: 'Price per 50 kg cement bag', group: 'prices',
+    rationale: 'Recent Oman buyer target range of 1.8-2.0 OMR per 50 kg bag. Shown for reference; mortar is not counted in v1.',
+    source: 'go4WorldBusiness — Cement Bags Buyers, Oman', sourceUrl: 'https://www.go4worldbusiness.com/buyers/worldwide/cement-bags.html',
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  price_omr_sand_m3: {
+    value: 6, unit: 'OMR/m3', label: 'Price per m3 of sand', group: 'prices',
+    rationale: 'Not sourced for Oman specifically; typical GCC building-sand price. Shown for reference; mortar is not counted in v1.',
+    source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+  price_omr_aggregate_m3: {
+    value: 7, unit: 'OMR/m3', label: 'Price per m3 of aggregate', group: 'prices',
+    rationale: 'Not sourced for Oman specifically; typical GCC coarse-aggregate price. Shown for reference; ready-mix already includes aggregate.',
+    source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
+
+  /* --- Section 7: orchestrator amendments (these override section 6's headline numbers) --- */
+  ext_perimeter_shape_factor: {
+    value: 1.15, unit: '-', label: 'Building shape factor for external wall length', group: 'walls',
+    rationale: 'External wall length = factor x 4 x square root of floor area. 1.0 is a perfect square, about 1.02 a 1.5:1 rectangle, 1.2-1.3 an L-shaped villa.',
+    source: 'Geometry; the villa-shape allowance is a rule of thumb', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  }
+};
+
+/* Assumptions that are words, not numbers — nothing to edit, but they still have to be visible
+ * and traceable. construction_system comes from the "Construction system chosen" heading of
+ * docs/research/assumptions.md; the other two are table rows. */
+const ASSUMPTION_NOTES = [
+  {
+    key: 'construction_system',
+    value: 'Reinforced-concrete frame (footings, columns, beams, solid slabs) with concrete block infill walls',
+    rationale: 'Confirmed as the dominant system for villas in Muscat and the wider GCC self-build market. Load-bearing masonry and precast were both rejected as rarer for private villas.',
+    source: 'Regional RC design guides, local contractors and block factories',
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  {
+    key: 'concrete_grade_structural',
+    value: 'C30',
+    rationale: 'Typical GCC villa structural grade for footings, tie beams, columns, beams and slabs. Lean/blinding concrete is folded into the footing allowance rather than counted separately.',
+    source: 'Common regional RC practice (ACI/BS-aligned)',
+    confidence: 'Likely', lastChecked: '2026-09-22'
+  },
+  {
+    key: 'rooms_are_all_spaces',
+    value: 'true',
+    rationale: 'The room list must include EVERY space on a floor — majlis, living, kitchen, bedrooms, bathrooms, corridors. Floor area is the sum of the space areas, so walls exist around every space, not only around "rooms".',
+    source: 'Quantity take-off practice',
+    confidence: 'Certain', lastChecked: '2026-09-22'
+  }
+];
+
+/* Sane bounds for anything the user types (docs/CONVENTIONS.md, input safety). */
+const LIMITS = {
+  floors: [1, 4],
+  wallHeightM: [2.4, 4.5],
+  roomSideM: [1, 20],
+  rooms: [1, 40],
+  areaM2: [30, 1500]
+};
+
+/* A worked example: every space on one floor of a typical two-storey Muscat villa.
+ * Per rooms_are_all_spaces, this list is ALL the spaces on the floor, so the areas sum to the
+ * whole floor area (about 200 m2) — corridor and staircase included. */
+const SAMPLE_HOUSE = {
+  floors: 2,
+  wallHeightM: 3.0,
+  rooms: [
+    { name: 'Majlis (guest sitting)', lengthM: 6.8, widthM: 5.0 },
+    { name: 'Guest WC', lengthM: 2.0, widthM: 1.5 },
+    { name: 'Living / family room', lengthM: 6.0, widthM: 4.5 },
+    { name: 'Dining', lengthM: 4.5, widthM: 3.5 },
+    { name: 'Kitchen', lengthM: 4.5, widthM: 3.5 },
+    { name: 'Store', lengthM: 2.5, widthM: 2.0 },
+    { name: 'Laundry', lengthM: 2.5, widthM: 2.0 },
+    { name: 'Master bedroom', lengthM: 5.0, widthM: 4.5 },
+    { name: 'Master bathroom', lengthM: 2.8, widthM: 2.5 },
+    { name: 'Bedroom 2', lengthM: 4.5, widthM: 4.0 },
+    { name: 'Bedroom 3', lengthM: 4.5, widthM: 4.0 },
+    { name: 'Family bathroom', lengthM: 2.5, widthM: 2.2 },
+    { name: 'Hall / corridor', lengthM: 14.0, widthM: 1.4 },
+    { name: 'Staircase', lengthM: 4.0, widthM: 2.2 }
+  ]
+};
+
+/* The space mix used by the m2 shortcut: share of the floor and shape (length / width) of each
+ * space, taken straight from SAMPLE_HOUSE so both input routes describe the same kind of house
+ * (rooms_are_all_spaces). Small houses drop the spaces a small house would not have. */
+const ROOM_MIX_STANDARD = [
+  { name: 'Majlis (guest sitting)', share: 0.1659, ratio: 1.36 },
+  { name: 'Guest WC', share: 0.0146, ratio: 1.33 },
+  { name: 'Living / family room', share: 0.1318, ratio: 1.33 },
+  { name: 'Dining', share: 0.0769, ratio: 1.29 },
+  { name: 'Kitchen', share: 0.0769, ratio: 1.29 },
+  { name: 'Store', share: 0.0244, ratio: 1.25 },
+  { name: 'Laundry', share: 0.0244, ratio: 1.25 },
+  { name: 'Master bedroom', share: 0.1098, ratio: 1.11 },
+  { name: 'Master bathroom', share: 0.0342, ratio: 1.12 },
+  { name: 'Bedroom 2', share: 0.0879, ratio: 1.13 },
+  { name: 'Bedroom 3', share: 0.0879, ratio: 1.13 },
+  { name: 'Family bathroom', share: 0.0268, ratio: 1.14 },
+  { name: 'Hall / corridor', share: 0.0957, ratio: 10.00 },
+  { name: 'Staircase', share: 0.0429, ratio: 1.82 }
+];
+
+const ROOM_MIX_SMALL = [
+  { name: 'Living / majlis', share: 0.2400, ratio: 1.35 },
+  { name: 'Kitchen', share: 0.1200, ratio: 1.30 },
+  { name: 'Master bedroom', share: 0.2000, ratio: 1.15 },
+  { name: 'Bedroom 2', share: 0.1600, ratio: 1.15 },
+  { name: 'Bathroom', share: 0.0900, ratio: 1.15 },
+  { name: 'Store', share: 0.0600, ratio: 1.25 },
+  { name: 'Hall / corridor', share: 0.1300, ratio: 5.00 }
+];
+
+function isFiniteNumber(n) {
+  return typeof n === 'number' && isFinite(n);
+}
+
+function round(n, places) {
+  const f = Math.pow(10, places);
+  return Math.round(n * f) / f;
+}
+
+function clamp(n, lo, hi) {
+  return n < lo ? lo : (n > hi ? hi : n);
+}
+
+function inRange(n, range) {
+  return n >= range[0] && n <= range[1];
+}
+
+/* Checks a house description and returns a cleaned copy. Throws a plain-English Error naming the
+ * field and its allowed range — the page shows this message as-is, so it never shows NaN. */
+function validateHouse(house) {
+  if (!house || typeof house !== 'object' || Array.isArray(house)) {
+    throw new Error('Please describe the house first: number of floors, wall height and a list of rooms.');
+  }
+  if (!isFiniteNumber(house.floors) || !Number.isInteger(house.floors) || !inRange(house.floors, LIMITS.floors)) {
+    throw new Error('Number of floors should be a whole number between ' + LIMITS.floors[0] + ' and ' + LIMITS.floors[1] + '.');
+  }
+  if (!isFiniteNumber(house.wallHeightM) || !inRange(house.wallHeightM, LIMITS.wallHeightM)) {
+    throw new Error('Wall height should be between ' + LIMITS.wallHeightM[0] + ' and ' + LIMITS.wallHeightM[1] + ' m.');
+  }
+  if (!Array.isArray(house.rooms) || house.rooms.length < LIMITS.rooms[0]) {
+    throw new Error('Add at least one room — the room list should cover every space on the floor.');
+  }
+  if (house.rooms.length > LIMITS.rooms[1]) {
+    throw new Error('That is a lot of rooms — please keep the room list to ' + LIMITS.rooms[1] + ' spaces or fewer.');
+  }
+  const rooms = house.rooms.map(function (room, i) {
+    const position = i + 1;
+    if (!room || typeof room !== 'object' || Array.isArray(room)) {
+      throw new Error('Room ' + position + ' is missing its size. Give it a length and a width in metres.');
+    }
+    /* A blank name is not an error — we name it for the user instead of stopping them. */
+    let name = typeof room.name === 'string' ? room.name.trim() : '';
+    if (name === '') name = 'Room ' + position;
+    if (!isFiniteNumber(room.lengthM) || !inRange(room.lengthM, LIMITS.roomSideM)) {
+      throw new Error('Length of "' + name + '" should be between ' + LIMITS.roomSideM[0] + ' and ' + LIMITS.roomSideM[1] + ' m.');
+    }
+    if (!isFiniteNumber(room.widthM) || !inRange(room.widthM, LIMITS.roomSideM)) {
+      throw new Error('Width of "' + name + '" should be between ' + LIMITS.roomSideM[0] + ' and ' + LIMITS.roomSideM[1] + ' m.');
+    }
+    return { name: name, lengthM: room.lengthM, widthM: room.widthM };
+  });
+  const floorAreaM2 = rooms.reduce(function (sum, r) { return sum + r.lengthM * r.widthM; }, 0);
+  if (!inRange(floorAreaM2, LIMITS.areaM2)) {
+    throw new Error('Floor area adds up to ' + round(floorAreaM2, 1) + ' m2. It should be between ' + LIMITS.areaM2[0] + ' and ' + LIMITS.areaM2[1] + ' m2 per floor.');
+  }
+  return { floors: house.floors, wallHeightM: house.wallHeightM, rooms: rooms };
+}
+
+/* The m2 shortcut: turn "my floor is about N m2" into a full, plausible list of spaces whose areas
+ * add up to N (within 2%). Deterministic — the same number in always gives the same list out.
+ * Uses rooms_are_all_spaces: the generated list covers the WHOLE floor, corridor included. */
+function generateRooms(areaM2) {
+  if (!isFiniteNumber(areaM2) || !inRange(areaM2, LIMITS.areaM2)) {
+    throw new Error('Approximate floor size should be a number between ' + LIMITS.areaM2[0] + ' and ' + LIMITS.areaM2[1] + ' m2 per floor.');
+  }
+  const mix = areaM2 < 90 ? ROOM_MIX_SMALL : ROOM_MIX_STANDARD;
+  const shareTotal = mix.reduce(function (s, m) { return s + m.share; }, 0);
+  const rooms = mix.map(function (m) {
+    const target = areaM2 * (m.share / shareTotal);
+    let width = Math.sqrt(target / m.ratio);
+    let length = width * m.ratio;
+    /* Keep every generated room inside the same bounds validateHouse() enforces. */
+    length = clamp(round(length, 1), LIMITS.roomSideM[0], LIMITS.roomSideM[1]);
+    width = clamp(round(width, 1), LIMITS.roomSideM[0], LIMITS.roomSideM[1]);
+    return { name: m.name, lengthM: length, widthM: width };
+  });
+  const area = function () {
+    return rooms.reduce(function (s, r) { return s + r.lengthM * r.widthM; }, 0);
+  };
+  /* Close the gap left by rounding and clamping: nudge room lengths by 0.1 m at a time, largest
+   * room first, until the total is within 0.5% of the target. Bounded, so it always terminates. */
+  for (let pass = 0; pass < 400; pass++) {
+    const diff = areaM2 - area();
+    if (Math.abs(diff) <= areaM2 * 0.005) break;
+    const order = rooms.map(function (r, i) { return i; }).sort(function (a, b) {
+      return (rooms[b].lengthM * rooms[b].widthM) - (rooms[a].lengthM * rooms[a].widthM);
+    });
+    let moved = false;
+    for (let j = 0; j < order.length; j++) {
+      const r = rooms[order[j]];
+      const step = diff > 0 ? 0.1 : -0.1;
+      const next = round(r.lengthM + step, 1);
+      if (next >= LIMITS.roomSideM[0] && next <= LIMITS.roomSideM[1]) {
+        r.lengthM = next;
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) break;
+  }
+  return rooms;
+}
+
+function resolveValues(overrides) {
+  const values = {};
+  for (const key in DEFAULTS) values[key] = DEFAULTS[key].value;
+  if (overrides === null || overrides === undefined) return values;
+  if (typeof overrides !== 'object' || Array.isArray(overrides)) {
+    throw new Error('Your edited assumptions could not be read. Please reload the page and try again.');
+  }
+  for (const key in overrides) {
+    if (!Object.prototype.hasOwnProperty.call(DEFAULTS, key)) {
+      throw new Error('"' + key + '" is not one of the assumptions this calculator uses.');
+    }
+    const v = overrides[key];
+    if (!isFiniteNumber(v)) {
+      throw new Error('Your value for "' + DEFAULTS[key].label + '" should be a number.');
+    }
+    if (v < 0) {
+      throw new Error('Your value for "' + DEFAULTS[key].label + '" cannot be negative.');
+    }
+    values[key] = v;
+  }
+  return values;
+}
+
+/* The estimate. Every formula below names the assumption keys it uses — that naming IS the
+ * traceability promise in docs/CONVENTIONS.md. */
+function estimate(house, overrides) {
+  const h = validateHouse(house);
+  const a = resolveValues(overrides);
+  const wastedBlocks = 1 + a.block_wastage_pct / 100;     /* block_wastage_pct */
+  const wastedConcrete = 1 + a.concrete_wastage_pct / 100; /* concrete_wastage_pct */
+  const wastedSteel = 1 + a.rebar_wastage_pct / 100;       /* rebar_wastage_pct */
+
+  /* Geometry. floorAreaM2 = sum of all space areas (rooms_are_all_spaces);
+   * builtUpAreaM2 = floorAreaM2 x floors (the same layout repeats on every floor). */
+  const floorAreaM2 = h.rooms.reduce(function (s, r) { return s + r.lengthM * r.widthM; }, 0);
+  const builtUpAreaM2 = floorAreaM2 * h.floors;
+
+  /* extWallLengthM = ext_perimeter_shape_factor x 4 x sqrt(floorAreaM2)   [section 7] */
+  const extWallLengthM = a.ext_perimeter_shape_factor * 4 * Math.sqrt(floorAreaM2);
+  /* intWallLengthM = int_wall_per_room_factor x sum(length + width) over every space */
+  const perimeterSum = h.rooms.reduce(function (s, r) { return s + r.lengthM + r.widthM; }, 0);
+  const intWallLengthM = a.int_wall_per_room_factor * perimeterSum;
+
+  /* Wall areas = length x wallHeightM x floors, less opening_deduction_pct for doors and windows. */
+  const openingFactor = 1 - a.opening_deduction_pct / 100;
+  const grossExt = extWallLengthM * h.wallHeightM * h.floors;
+  const grossInt = intWallLengthM * h.wallHeightM * h.floors;
+  const grossWallAreaM2 = grossExt + grossInt;
+  const extWallAreaM2 = grossExt * openingFactor;
+  const intWallAreaM2 = grossInt * openingFactor;
+  const netWallAreaM2 = extWallAreaM2 + intWallAreaM2;
+
+  /* Blocks = net wall area x blocks_per_m2_wall x block wastage, rounded up to whole blocks. */
+  const blocksExternal = Math.ceil(extWallAreaM2 * a.blocks_per_m2_wall * wastedBlocks);
+  const blocksInternal = Math.ceil(intWallAreaM2 * a.blocks_per_m2_wall * wastedBlocks);
+
+  /* Concrete. Footings and the ground slab are ground-floor only, so they use floorAreaM2 once;
+   * columns, beams and slabs repeat on every floor, so they use builtUpAreaM2.
+   * Keys: concrete_m3_per_m2_footings_tiebeams, concrete_m3_per_m2_ground_slab,
+   *       concrete_m3_per_m2_columns, concrete_m3_per_m2_beams, concrete_m3_per_m2_slab. */
+  const rawFootings = floorAreaM2 * a.concrete_m3_per_m2_footings_tiebeams;
+  const rawGroundSlab = floorAreaM2 * a.concrete_m3_per_m2_ground_slab;
+  const rawColumns = builtUpAreaM2 * a.concrete_m3_per_m2_columns;
+  const rawBeams = builtUpAreaM2 * a.concrete_m3_per_m2_beams;
+  const rawSlabs = builtUpAreaM2 * a.concrete_m3_per_m2_slab;
+
+  /* Steel = element concrete BEFORE wastage x that element's rebar_kg_per_m3 x rebar wastage.
+   * Ground slab decision: a ground-bearing slab is lightly reinforced, but it is reinforced — the
+   * worked example in assumptions.md section 6 spreads steel across ALL concrete including the
+   * ground slab, so we apply rebar_kg_per_m3_slabs to it too. Leaving it at zero would put the
+   * sample house below the 11-16 tonne range section 7 expects. */
+  const steel = function (m3, kgPerM3) { return m3 * kgPerM3 * wastedSteel; };
+
+  const rows = {
+    footings: {
+      label: 'Footings & tie beams',
+      concreteM3: round(rawFootings * wastedConcrete, 2),
+      steelKg: round(steel(rawFootings, a.rebar_kg_per_m3_footings), 1),
+      blocks: 0,
+      wastagePct: a.concrete_wastage_pct
+    },
+    groundSlab: {
+      label: 'Ground slab',
+      concreteM3: round(rawGroundSlab * wastedConcrete, 2),
+      steelKg: round(steel(rawGroundSlab, a.rebar_kg_per_m3_slabs), 1),
+      blocks: 0,
+      wastagePct: a.concrete_wastage_pct
+    },
+    columns: {
+      label: 'Columns',
+      concreteM3: round(rawColumns * wastedConcrete, 2),
+      steelKg: round(steel(rawColumns, a.rebar_kg_per_m3_columns), 1),
+      blocks: 0,
+      wastagePct: a.concrete_wastage_pct
+    },
+    beams: {
+      label: 'Beams',
+      concreteM3: round(rawBeams * wastedConcrete, 2),
+      steelKg: round(steel(rawBeams, a.rebar_kg_per_m3_beams), 1),
+      blocks: 0,
+      wastagePct: a.concrete_wastage_pct
+    },
+    slabs: {
+      label: 'Floor & roof slabs',
+      concreteM3: round(rawSlabs * wastedConcrete, 2),
+      steelKg: round(steel(rawSlabs, a.rebar_kg_per_m3_slabs), 1),
+      blocks: 0,
+      wastagePct: a.concrete_wastage_pct
+    },
+    wallsExternal: {
+      label: 'External walls (200 mm block)',
+      concreteM3: 0,
+      steelKg: 0,
+      blocks: blocksExternal,
+      wastagePct: a.block_wastage_pct
+    },
+    wallsInternal: {
+      label: 'Internal walls (150 mm block)',
+      concreteM3: 0,
+      steelKg: 0,
+      blocks: blocksInternal,
+      wastagePct: a.block_wastage_pct
+    }
+  };
+
+  /* Costs. External blocks at price_omr_block_200, internal at price_omr_block_150,
+   * concrete at price_omr_readymix_c30_m3, steel at price_omr_rebar_tonne. */
+  rows.wallsExternal.costOmr = round(blocksExternal * a.price_omr_block_200, 2);
+  rows.wallsInternal.costOmr = round(blocksInternal * a.price_omr_block_150, 2);
+  const concreteRows = ['footings', 'groundSlab', 'columns', 'beams', 'slabs'];
+  let totalConcreteM3 = 0;
+  let totalSteelKg = 0;
+  concreteRows.forEach(function (key) {
+    const row = rows[key];
+    totalConcreteM3 += row.concreteM3;
+    totalSteelKg += row.steelKg;
+    row.costOmr = round(
+      row.concreteM3 * a.price_omr_readymix_c30_m3 + (row.steelKg / 1000) * a.price_omr_rebar_tonne,
+      2
+    );
+  });
+  totalConcreteM3 = round(totalConcreteM3, 2);
+  totalSteelKg = round(totalSteelKg, 1);
+
+  const costBlocksOmr = round(rows.wallsExternal.costOmr + rows.wallsInternal.costOmr, 2);
+  const costConcreteOmr = round(totalConcreteM3 * a.price_omr_readymix_c30_m3, 2);
+  const costSteelOmr = round((totalSteelKg / 1000) * a.price_omr_rebar_tonne, 2);
+
+  const assumptionsUsed = [];
+  for (const key in DEFAULTS) {
+    const d = DEFAULTS[key];
+    assumptionsUsed.push({
+      key: key,
+      label: d.label,
+      value: a[key],
+      unit: d.unit,
+      defaultValue: d.value,
+      overridden: a[key] !== d.value,
+      source: d.source,
+      sourceUrl: d.sourceUrl,
+      confidence: d.confidence,
+      lastChecked: d.lastChecked
+    });
+  }
+
+  const guessing = assumptionsUsed
+    .filter(function (x) { return x.confidence === 'Guessing' && DEFAULTS[x.key].group === 'prices'; })
+    .map(function (x) { return x.label.toLowerCase(); });
+
+  const notes = [
+    'These are starting-point prices, not quotes — check with your supplier before you order.',
+    'Quantities already include wastage: ' + a.block_wastage_pct + '% on blocks, ' + a.concrete_wastage_pct + '% on concrete and ' + a.rebar_wastage_pct + '% on steel.',
+    'This covers blocks, ready-mix concrete and rebar steel only. It excludes mortar (sand and cement), plaster, tiles, paint, doors and windows, electrics and plumbing, and all labour.',
+    'Least reliable prices (marked "Guessing" in the assumptions): ' + guessing.join(', ') + '.',
+    'Every space on the floor must be in the room list — corridors and stairs included — because the floor area is the sum of the spaces you list, and the same layout is repeated on every floor.'
+  ];
+
+  return {
+    inputs: {
+      floors: h.floors,
+      wallHeightM: h.wallHeightM,
+      roomCount: h.rooms.length,
+      floorAreaM2: round(floorAreaM2, 2),
+      builtUpAreaM2: round(builtUpAreaM2, 2),
+      extWallLengthM: round(extWallLengthM, 2),
+      intWallLengthM: round(intWallLengthM, 2),
+      grossWallAreaM2: round(grossWallAreaM2, 2),
+      netWallAreaM2: round(netWallAreaM2, 2),
+      extWallAreaM2: round(extWallAreaM2, 2),
+      intWallAreaM2: round(intWallAreaM2, 2)
+    },
+    elements: rows,
+    totals: {
+      blocks: blocksExternal + blocksInternal,
+      blocksExternal: blocksExternal,
+      blocksInternal: blocksInternal,
+      concreteM3: totalConcreteM3,
+      steelKg: totalSteelKg,
+      steelTonnes: round(totalSteelKg / 1000, 3),
+      costOmr: round(costBlocksOmr + costConcreteOmr + costSteelOmr, 2),
+      costBlocksOmr: costBlocksOmr,
+      costConcreteOmr: costConcreteOmr,
+      costSteelOmr: costSteelOmr
+    },
+    assumptionsUsed: assumptionsUsed,
+    notes: notes
+  };
+}
+</script>
+<script type="application/json" id="build-log">[
+  {
+    "order": 1,
+    "agent": "product-manager",
+    "model": "sonnet",
+    "round": 1,
+    "startedAt": "2026-09-22T07:23:29.196Z",
+    "prompt": "Repo: /home/user/House-building (multi-repo root is /home/user; the Agents library is /home/user/Agents). Read /home/user/House-building/docs/CONVENTIONS.md first — it is the law for this repo. Also read /home/user/Agents/docs/engineering-standards.md sections 6–8 as your own process says. Do NOT look for this app in Agents/docs/apps.md — the owner chose not to register it; note that in the spec and proceed.\n\nThe owner's idea, in their words: \"A person is building a house and trying to count how many blocks, steel, ready mix cement is needed to build the house. The input can be the house size, floors, approx number of rooms, floorplan manually. It's a simple website in HTML so I can share it with a colleague.\"\n\nDecisions already made by the owner (do not reopen them):\n- One single self-contained index.html page. English only (Arabic out of scope). Works offline from file://.\n- v1 input is a manual room list (each room: name, length m, width m) plus number of floors, wall height, and an optional \"approximate house size m² per floor\" shortcut that auto-generates a plausible room list when the user doesn't want to type rooms. Floorplan upload (image/PDF/DWG) is OUT of scope for v1.\n- Outputs: quantities per structural element (foundations, columns, beams, slabs, walls) — concrete blocks (count, external vs internal), rebar steel (kg and tonnes), ready-mix concrete (m³) — each with a visible, editable wastage %, plus OMR cost from an editable price table whose defaults a researcher agent is sourcing separately (with a \"last checked\" date and source per row). Prices are defaults the user can overwrite, never authoritative.\n- Construction system defaults (RC frame + block infill or otherwise) are being decided by the researcher agent in parallel; write the spec so it references \"the assumptions in docs/research/assumptions.md\" rather than inventing numbers.\n- The same page has a second section, \"How this page was built\", showing the AI agent team's steps. That section is generated from docs/build-log/*.json by the build script — mention it in the spec as a section the page has, but its content is not the estimator's concern.\n- Finishes (plaster, tiles, paint), MEP, labour, and any claim that prices are accurate are OUT of scope.\n\nWrite the spec to /home/user/House-building/docs/specs/estimator.md with your standard sections (problem in the owner's words; what the user sees and does screen by screen; out of scope; data touched; \"done when\" checklist a non-developer can verify; at most 3 open questions each with a suggested default). Recommend ui-designer runs before building. Keep it small and buildable.\n\nYour final message: the spec's path, a five-line plain-English summary, and the open questions.\n",
+    "report": "Spec written: docs/specs/estimator.md\n\nFive-line summary:\n- One offline HTML page: user enters floors, wall height, and a room list (name/length/width) — or an \"approximate m² per floor\" shortcut that auto-generates an editable room list instead.\n- Results show concrete (m³), rebar steel (kg and tonnes), and blocks (external vs internal, pcs) broken down by foundations/columns/beams/slabs/walls, each with its own editable wastage %.\n- A total OMR cost comes from an editable price table whose defaults carry a source and \"last checked\" date from docs/research/assumptions.md — user overrides always win.\n- Out of scope: floorplan upload, finishes, MEP, labour, Arabic, any accounts/saving — nothing typed is sent or stored anywhere, so no privacy-page change is needed; no server calls means no rate limiting either.\n- This feature is the app's core guarantee (every number traceable to a named assumption), so the spec requires automated tests in test/calc.test.mjs for the worked example, overrides, and bad-input error handling; recommends ui-designer runs before builder.\n\nOpen questions (suggested defaults):\n1. Same room list repeated on every floor, or per-floor layouts? Default: same list for all floors in v1.\n2. Does the auto-generated room list stay a one-time editable starting point, or regenerate on change? Default: one-time, no regenerate button.\n3. OMR only, or multi-currency? Default: OMR only in v1.\n\nOrchestrator decision: all three defaults accepted.\n",
+    "finishedAt": "2026-09-22T07:24:49.243Z",
+    "outcome": "spec written; 3 open questions, defaults accepted",
+    "file": "01-product-manager"
+  },
+  {
+    "order": 2,
+    "agent": "researcher",
+    "model": "sonnet",
+    "round": 1,
+    "startedAt": "2026-09-22T07:23:29.256Z",
+    "prompt": "Repo: /home/user/House-building. Read /home/user/House-building/docs/CONVENTIONS.md first (golden rule: every number on screen is traceable to a named assumption in the file you are about to write). You are read-only in general, but for this job you ARE expected to write exactly one file: /home/user/House-building/docs/research/assumptions.md. Nothing else.\n\nThe job: decide and document the construction defaults for a simple residential house-material estimator aimed at Oman / GCC self-builders (a person building their own villa and wanting a rough count of blocks, rebar steel and ready-mix concrete). Choose the construction system yourself — the owner deliberately left it to you — and say why in two lines. The obvious candidate is a reinforced-concrete frame (footings, columns, beams, slabs) with hollow concrete block infill walls, which is how Muscat villas are typically built, but confirm and document it.\n\nDocument, with a one-line rationale and a source (URL or named standard/handbook) for each, and a plain \"confidence\" tag (Certain / Likely / Guessing):\n1. Block sizes and counts: standard hollow block dimensions used in Oman (external and internal partition walls), mortar joint thickness, resulting blocks per m² of wall, and a wastage %.\n2. Wall geometry rules of thumb: how to derive external wall length and internal wall length from a room list (name, length, width) per floor; typical door/window opening deduction as a %; typical external wall thickness vs internal.\n3. Concrete volumes: rules of thumb per m² of built-up area (or per element) for isolated footings + tie beams, columns, beams, slabs (slab thickness), ground slab/plinth — for a 1–4 floor villa. State the grade (e.g. C30/C35) and wastage %.\n4. Rebar steel: kg of steel per m³ of concrete per element (footings, columns, beams, slabs) — typical ranges and the single default you pick — plus wastage %.\n5. Prices in OMR, as of today (2026-09-22): hollow block per piece (200mm and 150mm), rebar per tonne, ready-mix per m³ (state the grade), and ideally cement bag/sand/aggregate for mortar. Use web search; give the source URL and the date you checked. If a price can't be sourced, say so and give a clearly labelled estimate with confidence \"Guessing\". These become editable defaults in the UI, never authoritative — say that at the top of the price table.\n6. A worked example: a 2-floor, 5-room, ~200 m² per floor villa, with the resulting block count, concrete m³, steel tonnes, and OMR cost, so the builders have a number to test against.\n\nFormat the file so a builder can transcribe it straight into a JavaScript DEFAULTS object: give every assumption a short snake_case key (e.g. block_ext_per_m2, rebar_kg_per_m3_columns, price_omr_block_200) in a table with columns: key | value | unit | rationale | source | confidence | last_checked. Keep it under ~200 lines.\n\nYour final message: the file path, the construction system you chose and why (two lines), the six headline numbers of the worked example, and which prices you could not source properly.\n",
+    "report": "File written: docs/research/assumptions.md (115 lines).\n\nConstruction system chosen: RC skeleton frame (isolated footings + tie beams, columns, beams, solid slabs) with hollow concrete block infill walls — the standard for Muscat/GCC villas; block-on-frame is faster/cheaper than load-bearing masonry and is what local block factories and contractors design around by default.\n\nWorked example (2-floor, 5-room, ~200 m²/floor = 400 m² villa): ≈5,320 blocks · ≈126 m³ concrete · ≈13.6 tonnes steel · ≈1,330 OMR blocks · ≈4,032 OMR concrete · ≈3,536 OMR steel (≈8,900 OMR materials total).\n\nPrices NOT properly sourced (marked \"Guessing\"): 200mm and 150mm hollow block unit price, ready-mix C30 per m³, sand, aggregate. Supplier sites (mcp.om, buymaterials.com, alyusroman.com) were blocked by the environment's network proxy; only search snippets were usable. Rebar (≈260 OMR/tonne) and cement (≈1.9 OMR/bag) are sourced but \"Likely\"/\"Guessing\".\n\nOrchestrator review: concrete and steel ratios are in the normal villa range. Block count is low because the sample's five rooms cover only half the floor. Amendment appended as section 7: the room list must include every space, and an external-perimeter shape factor was added. Section 6 numbers superseded by the calculator's own sample house.\n",
+    "finishedAt": "2026-09-22T07:27:03.333Z",
+    "outcome": "assumptions written; orchestrator amended wall rule (section 7)",
+    "file": "02-researcher"
+  },
+  {
+    "order": 3,
+    "agent": "ui-designer",
+    "model": "sonnet",
+    "round": 1,
+    "startedAt": "2026-09-22T07:24:49.295Z",
+    "prompt": "Repo: /home/user/House-building. Read, in this order: docs/CONVENTIONS.md (the law for this repo — golden rule: every number on screen is traceable, prices editable, single offline index.html, phone-first at 390px and fine at 1440px, no external assets), then docs/specs/estimator.md (the approved spec; the owner accepted all three open-question defaults: same room list on every floor, the m² shortcut generates a one-time editable room list, OMR only).\n\nWrite the screen spec to /home/user/House-building/docs/specs/estimator-ui.md. English only — ignore your Arabic/RTL habit for this app, the spec puts Arabic out of scope; say so in one line. No existing components exist (empty repo, plain HTML + CSS + vanilla JS), so instead of \"components to reuse\" define a small set of reusable patterns (card, number input with unit suffix, results table, expandable row) the builder implements once.\n\nThe page has two sections, top to bottom:\n1. \"House material estimator\" — inputs (floors, wall height, the m² shortcut, the editable room list with add/remove rows), an editable assumptions & prices panel (collapsed by default; each row: label, value input, unit, source link, last-checked date, a \"reset to default\" affordance), a Calculate button, and results: a headline row (total blocks, total concrete m³, total steel tonnes, total OMR), then a per-element breakdown table (foundations, columns, beams, slabs, walls × concrete / steel / blocks / wastage % editable / cost). Include empty, error (validation message from the calculator, plain English, never NaN), and \"assumptions overridden\" states. The builder must expose these hooks for the smoke test: a button with data-action=\"load-sample\" (loads the 2-floor 5-room worked example), a button with data-action=\"calculate\", and the total-blocks headline element with data-result=\"blocks-total\".\n2. \"How this page was built\" — a story section generated from a list of agent dispatch records (fields: order, agent, model, round, prompt, report, outcome, startedAt, finishedAt). Design: a short plain-English intro (1 paragraph) explaining the AI team and one honest note that in a cloud session the main session runs the dev-lead playbook itself, a small org diagram (main session → crew members used), then a vertical timeline, one card per dispatch: step number, agent name, model badge (haiku / sonnet / opus), round badge if round > 1, one-line outcome; each card expands (\u003cdetails>) to show \"What it was asked\" (the prompt, monospace, scrollable) and \"What it reported back\" (the report). Mixed audience: non-technical readers get the story from the collapsed cards, technical readers open the details.\n\nGive: layout at 1440 and 390 (stacking rules), a restrained colour/spacing system defined as CSS custom properties with a dark-mode variant via prefers-color-scheme, typography (system font stack only), and the exact list of DOM ids / data- attributes the builder must use so calc wiring and tests agree. Keep the whole spec under ~250 lines. No code beyond attribute names and CSS variable names.\n\nYour final message: the file path and a ten-line summary of the screens and states.\n",
+    "report": "Spec written to docs/specs/estimator-ui.md (English only; Arabic/RTL stated out of scope).\n\n1. Two sections stacked on one page: \"House material estimator\" then \"How this page was built\" — one component vocabulary (card, number-input-with-unit, results table, expandable row).\n2. 1440px: centered 960px column with a 3-col house-details grid; 390px: one column, room list and breakdown become stacked mini-cards, no horizontal scroll.\n3. Estimator states: empty, loading (button disables), error (plain-English message, never NaN, offending field gets .field-error), success, and \"assumptions overridden\" (per-row badge + reset + summary note).\n4. m² shortcut is one-time: re-entering m² does not regenerate; only re-ticking the toggle does.\n5. Assumptions & prices panel: \u003cdetails> collapsed by default, grouped Blocks / Wall geometry / Concrete / Steel / Prices; each row label, editable value+unit, source, last-checked, reset-to-default (disabled at default).\n6. Hooks fixed: data-action=\"load-sample\", data-action=\"calculate\", data-result=\"blocks-total\" (+ concrete-total, steel-total, cost-total), #results-empty/-error/-success, #room-list, #assumptions-panel, data-action=\"reset-default\" with data-key.\n7. Load-sample must reproduce the worked example from assumptions.md §6 (~5,320 blocks…).\n8. Section 2: intro paragraph with the honest cloud-session note, org-diagram card, vertical timeline of \u003cdetails> cards per dispatch (step / agent / model badge / round badge / outcome; expanded: prompt monospace scrollable + report).\n9. CSS custom properties (--bg, --surface, --accent, --danger, --badge-haiku/sonnet/opus, spacing, --content-max: 960px) with prefers-color-scheme dark; system fonts, 16px min, 44px touch targets, no external assets.\n10. Decision flagged: --accent defaulted to a calm mid-blue since no brand colour exists.\n\nOrchestrator decisions: mid-blue accepted. Item 7 superseded — the sample house lives in calc.js (SAMPLE_HOUSE) per assumptions.md section 7, not the §6 numbers.\n",
+    "finishedAt": "2026-09-22T07:28:02.147Z",
+    "outcome": "UI spec written; accent colour decided by orchestrator; §6 reference superseded",
+    "file": "03-ui-designer"
+  },
+  {
+    "order": 4,
+    "agent": "builder",
+    "model": "opus",
+    "round": 1,
+    "startedAt": "2026-09-22T07:27:03.386Z",
+    "prompt": "Repo: /home/user/House-building (empty static-HTML project, Node 22 for tests only). Read in this order: docs/CONVENTIONS.md (the law — golden rule restated verbatim: **Every number on screen is traceable. Every quantity the page shows must come from a named, documented assumption in docs/research/assumptions.md. Prices are NEVER hard-coded anywhere except the editable defaults table that src/calc.js exports, and that table carries a \"last checked\" date and a source for each row. A user can overwrite any default in the UI; the calculation must use the overridden value.**), then docs/research/assumptions.md (ALL sections including section 7, the orchestrator amendments, which override section 6's headline numbers), then docs/specs/estimator.md. Also skim /home/user/Agents/docs/engineering-standards.md section 1 (input safety) and 7 (core-guarantee tests).\n\nYou are builder A. Another builder (B) is writing src/page.html and scripts/build.mjs in parallel against the SAME contract below. You write exactly two files: src/calc.js and test/calc.test.mjs. Touch nothing else. You do not need a worktree — your files and B's are disjoint.\n\n## The contract (pinned; B is coding against this verbatim)\n\nsrc/calc.js is an ES module. It must ALSO be valid as a classic \u003cscript> once the build step strips the leading `export ` keyword from each export line — so: no `import`, no top-level await, only `export const/function` at column 0, and everything else plain.\n\n```\nexport const DEFAULTS = {\n  // one entry per key in assumptions.md sections 1–5 and 7 (numbers only; string-valued rows like concrete_grade_structural and rooms_are_all_spaces go in ASSUMPTION_NOTES below)\n  key: { value: number, unit: string, label: string /* plain English */, group: 'blocks'|'walls'|'concrete'|'steel'|'prices'|'wastage', rationale: string, source: string, sourceUrl: string|null, confidence: 'Certain'|'Likely'|'Guessing', lastChecked: 'YYYY-MM-DD' },\n  ...\n};\nexport const ASSUMPTION_NOTES = [ { key, value: string, rationale, source, confidence, lastChecked } ];  // concrete_grade_structural, rooms_are_all_spaces, construction_system\nexport const LIMITS = { floors: [1, 4], wallHeightM: [2.4, 4.5], roomSideM: [1, 20], rooms: [1, 40], areaM2: [30, 1500] };\nexport const SAMPLE_HOUSE = { floors: 2, wallHeightM: 3.0, rooms: [ /* ALL spaces of one ~200 m² floor: majlis, living, dining, kitchen, 3 bedrooms, 2 bathrooms, hall/corridor, store — name, lengthM, widthM — summing to 195–205 m² */ ] };\nexport function generateRooms(areaM2) → rooms[]   // the m² shortcut: a plausible full set of spaces (same kinds as SAMPLE_HOUSE, scaled) whose areas sum to areaM2 within ±2%; deterministic; throws plain-English Error if areaM2 outside LIMITS.areaM2\nexport function validateHouse(house) → house      // throws Error with a plain-English message (name the field and the allowed range) on: non-object, floors/wallHeightM/room sides not finite or outside LIMITS, empty rooms, missing/blank room name (default to \"Room N\" instead of throwing)\nexport function estimate(house, overrides = {}) → result\n```\n\nhouse = { floors, wallHeightM, rooms: [{ name, lengthM, widthM }] } — rooms are ALL spaces of one floor; the same list applies on every floor (owner's decision).\noverrides = { [DEFAULTS key]: number } — user-edited assumptions/prices/wastage; a non-finite or negative override throws a plain-English Error naming the key. Any key not in DEFAULTS throws.\n\nresult = {\n  inputs: { floors, wallHeightM, roomCount, floorAreaM2, builtUpAreaM2, extWallLengthM, intWallLengthM, grossWallAreaM2, netWallAreaM2, extWallAreaM2, intWallAreaM2 },\n  elements: {\n    footings:      { label: 'Footings & tie beams', concreteM3, steelKg, blocks: 0, wastagePct, costOmr },\n    groundSlab:    { label: 'Ground slab',          concreteM3, steelKg: 0, blocks: 0, wastagePct, costOmr },   // steel: slab rate applies if you judge it should — document in a code comment either way\n    columns:       { label: 'Columns',  ... },\n    beams:         { label: 'Beams',    ... },\n    slabs:         { label: 'Floor & roof slabs', ... },\n    wallsExternal: { label: 'External walls (200 mm block)', concreteM3: 0, steelKg: 0, blocks, wastagePct, costOmr },\n    wallsInternal: { label: 'Internal walls (150 mm block)', concreteM3: 0, steelKg: 0, blocks, wastagePct, costOmr },\n  },\n  totals: { blocks, blocksExternal, blocksInternal, concreteM3, steelKg, steelTonnes, costOmr, costBlocksOmr, costConcreteOmr, costSteelOmr },\n  assumptionsUsed: [ { key, label, value, unit, defaultValue, overridden: boolean, source, sourceUrl, confidence, lastChecked } ],  // every DEFAULTS key, in DEFAULTS order\n  notes: [ string ]  // plain-English caveats: prices are editable defaults not quotes; excludes mortar/finishes/MEP/labour; which prices are \"Guessing\"\n}\n\nAll quantities in the result are numbers already including wastage (wastage per MATERIAL: block_wastage_pct, concrete_wastage_pct, rebar_wastage_pct — each element row reports the pct that applied to it). Blocks are whole numbers (Math.ceil). Costs use the price keys; external blocks at price_omr_block_200, internal at price_omr_block_150, concrete at price_omr_readymix_c30_m3, steel at price_omr_rebar_tonne. Never return NaN or Infinity anywhere — validate first.\n\nGeometry (from assumptions.md): floorAreaM2 = Σ room areas; builtUpAreaM2 = floorAreaM2 × floors; extWallLengthM = ext_perimeter_shape_factor × 4 × √floorAreaM2; intWallLengthM = int_wall_per_room_factor × Σ(L+W); wall areas = length × wallHeightM × floors, then × (1 − opening_deduction_pct/100); blocks = net area × blocks_per_m2_wall × (1 + wastage). Concrete: footings and ground slab use floorAreaM2 once (ground floor only); columns, beams, slabs use builtUpAreaM2. Steel = element concrete (before wastage) × that element's rebar_kg_per_m3 × (1 + rebar wastage). Add a code comment above each formula naming the assumption keys it uses — that IS the traceability.\n\n## Tests (test/calc.test.mjs, node:test + node:assert, run with `node --test test/`)\n- DEFAULTS: every entry has all fields, numeric value, a lastChecked date, a confidence from the allowed set; every key in assumptions.md's tables (grep the file in the test, parse the `| key |` rows) exists in DEFAULTS or ASSUMPTION_NOTES, and vice versa.\n- SAMPLE_HOUSE: valid; floor area 195–205 m²; estimate lands in the ranges from section 7 (8,000–12,000 blocks, 110–140 m³ concrete, 11–16 t steel); totals equal the sum of element rows; costOmr = costBlocks + costConcrete + costSteel; a golden snapshot of the sample's headline totals (write the exact numbers your code produces into the test as constants, so any future formula change is a deliberate diff).\n- generateRooms: sums to area within ±2% for 60, 200, 800 m²; deterministic; throws outside LIMITS.\n- Overrides: overriding price_omr_block_200 changes costBlocksOmr and nothing else in quantities; assumptionsUsed marks it overridden and keeps defaultValue; unknown key throws; negative throws.\n- Validation: each bad input (floors 0 and 5, wall height 2, room side 0 and 25, empty rooms, floors \"two\") throws an Error whose message mentions the field; no NaN in any numeric field of a valid result (walk the object).\n- Doubling floors doubles blocks and slab concrete but not footings.\n\nRun `node --test test/` until green. Then run this to prove the classic-script constraint: `node -e \"const s=require('fs').readFileSync('src/calc.js','utf8').replace(/^export /gm,''); new Function(s+';return estimate(SAMPLE_HOUSE).totals')()\"` and print the totals.\n\nYour final message (plain English, under 25 lines): the files written, the sample house's headline totals, the test count and result, anything from assumptions.md you had to interpret and how, and any concern for the reviewer.\n",
+    "report": "Builder A done. Two files written, nothing else touched.\n\nFiles\n- src/calc.js — DEFAULTS (30 numeric rows, sections 1–5 + 7, each with label, group, rationale, source, sourceUrl, confidence, lastChecked), ASSUMPTION_NOTES (construction_system, concrete_grade_structural, rooms_are_all_spaces), LIMITS, SAMPLE_HOUSE, generateRooms, validateHouse, estimate — exactly the pinned contract shape. Every formula has a comment naming the assumption keys it uses. No imports, no template literals, only `export const/function` at column 0.\n- test/calc.test.mjs — 20 tests, node:test.\n\nSample house headline totals (golden snapshot, pinned in the test)\n14 spaces, 204.9 m²/floor, 2 floors → 8,053 blocks (4,408 external + 3,645 internal), 129.08 m³ concrete, 12.909 t steel; cost 1,794.55 (blocks) + 4,130.56 (concrete) + 3,356.26 (steel) = 9,281.37 OMR.\n\nTests: 20 tests, 20 pass, 0 fail. The classic-script proof (`export ` stripped, run through `new Function`) produced byte-identical totals.\n\nInterpretations I had to make (reviewer, please check these three)\n1. Ground-slab steel. The contract's type sketch shows groundSlab.steelKg: 0 but allows judgment. I apply rebar_kg_per_m3_slabs to the ground slab, because assumptions.md section 6 spreads steel over ALL concrete including it — with zero, the sample falls to 10.9 t, below section 7's 11–16 t range. Documented in a code comment.\n2. Sample house size. Section 7's floor of 8,000 blocks is only just reachable inside the 195–205 m² window: my sample lands at 204.9 m² and 8,053 blocks. The margin is ~0.7% — honest arithmetic, not tuned numbers, but a small future change to the shape factor or opening deduction could push the sample under the assertion.\n3. Wastage per row. Concrete rows report concrete_wastage_pct; wall rows report block_wastage_pct. Steel inside a concrete row uses rebar_wastage_pct, which the row cannot display in a single field — the results notes state all three percentages instead.\nAlso: ext_wall_perimeter_factor (section 2) is superseded by ext_perimeter_shape_factor (section 7) for the external-wall formula; it stays in DEFAULTS with its rationale saying so. Cement, sand and aggregate prices are carried for traceability but not used in v1 costs (mortar is out of scope).\n\nOne thing for the lead, not a code fault: the verify recipe's step 1, `node --test test/`, FAILS on this Node 22.22 build (a directory argument is resolved as a module). `node --test test/*.mjs` runs the suite fine. CONVENTIONS.md is outside my two files, so I did not edit it.\n\nOrchestrator: recipe step 1 changed to `node --test test/*.mjs` in CONVENTIONS.md. The three interpretations go to code-reviewer as explicit checks.\n",
+    "finishedAt": "2026-09-22T07:35:33.103Z",
+    "outcome": "calc.js + 20 tests green; 3 interpretations flagged for review; verify recipe typo fixed by orchestrator",
+    "file": "04a-builder"
+  },
+  {
+    "order": 4,
+    "agent": "builder",
+    "model": "opus",
+    "round": 1,
+    "startedAt": "2026-09-22T07:28:02.198Z",
+    "prompt": "Repo: /home/user/House-building (empty static-HTML project, Node 22 for the build step only). Read in this order: docs/CONVENTIONS.md (the law — golden rule restated verbatim: **Every number on screen is traceable. Every quantity the page shows must come from a named, documented assumption in docs/research/assumptions.md. Prices are NEVER hard-coded anywhere except the editable defaults table that src/calc.js exports, and that table carries a \"last checked\" date and a source for each row. A user can overwrite any default in the UI; the calculation must use the overridden value.**), then docs/specs/estimator-ui.md (your screen spec — follow its ids, data- attributes, CSS variables, states and layouts exactly), then docs/specs/estimator.md, then scripts/smoke.mjs (the browser check your page must pass) and scripts/log-dispatch.mjs (the shape of the build-log records). Skim docs/research/assumptions.md so you know what the assumptions panel will show, but you do NOT transcribe any numbers — they all come from calc.js at runtime.\n\nYou are builder B. Builder A is writing src/calc.js and test/calc.test.mjs in parallel against the SAME contract below; it may not exist yet when you start, so code against the contract and, to test locally, write a throwaway stub at /tmp/claude-0/-home-user/45cb2a17-fe5f-5908-8aae-c975d251dffa/scratchpad/calc-stub.js that matches the contract with fake numbers — never commit a stub, never write src/calc.js. You write exactly two files: src/page.html and scripts/build.mjs. Touch nothing else. No worktree needed — your files and A's are disjoint.\n\nTwo corrections to the UI spec, from the orchestrator: (1) its item about \"load sample must reproduce the §6 worked example numbers\" is superseded — load-sample loads SAMPLE_HOUSE from calc.js and whatever estimate() returns is right; (2) --accent is the calm mid-blue the designer proposed, decided.\n\n## The contract (pinned; A is coding against this verbatim)\n\nsrc/calc.js is an ES module whose every export line starts with `export ` at column 0; the build strips that prefix and inlines the result as a classic script. It exports:\n- DEFAULTS: { key: { value:number, unit, label, group:'blocks'|'walls'|'concrete'|'steel'|'prices'|'wastage', rationale, source, sourceUrl:string|null, confidence:'Certain'|'Likely'|'Guessing', lastChecked:'YYYY-MM-DD' } }\n- ASSUMPTION_NOTES: [ { key, value:string, rationale, source, confidence, lastChecked } ]  (construction system, concrete grade, the \"list every space\" rule — show these as read-only text at the top of the assumptions panel)\n- LIMITS: { floors:[1,4], wallHeightM:[2.4,4.5], roomSideM:[1,20], rooms:[1,40], areaM2:[30,1500] }  (use for input min/max/step attributes)\n- SAMPLE_HOUSE: { floors, wallHeightM, rooms:[{name,lengthM,widthM}] }\n- generateRooms(areaM2) → rooms[]  (throws plain-English Error outside LIMITS)\n- validateHouse(house) → house  (throws plain-English Error)\n- estimate(house, overrides={}) → { inputs:{ floors, wallHeightM, roomCount, floorAreaM2, builtUpAreaM2, extWallLengthM, intWallLengthM, grossWallAreaM2, netWallAreaM2, extWallAreaM2, intWallAreaM2 }, elements:{ footings, groundSlab, columns, beams, slabs, wallsExternal, wallsInternal — each { label, concreteM3, steelKg, blocks, wastagePct, costOmr } }, totals:{ blocks, blocksExternal, blocksInternal, concreteM3, steelKg, steelTonnes, costOmr, costBlocksOmr, costConcreteOmr, costSteelOmr }, assumptionsUsed:[ { key, label, value, unit, defaultValue, overridden, source, sourceUrl, confidence, lastChecked } ], notes:[string] }\n  overrides = { [DEFAULTS key]: number } — only include keys the user actually changed. estimate throws a plain-English Error on bad input; catch it and show the message in #results-error.\n\n## src/page.html\nA complete HTML5 document (lang=\"en\", viewport meta, \u003ctitle>House Material Estimator\u003c/title>), all CSS in one \u003cstyle>, all JS in one \u003cscript> at the end, no external assets of any kind. It contains exactly two markers on their own lines:\n- `\u003c!--CALC-->` — the build replaces it with `\u003cscript>` + calc.js (export prefixes stripped) + `\u003c/script>`. Your page script must come AFTER it and call the globals estimate, DEFAULTS, etc. directly.\n- `\u003c!--BUILDLOG-->` — the build replaces it with `\u003cscript type=\"application/json\" id=\"build-log\">[...records...]\u003c/script>`. Your page script reads and JSON.parses that element and renders section 2 from it (records: { order:number, agent, model, round, startedAt, finishedAt?, prompt, report?, outcome? }; sort by order then round; the order field can be like 4 for both \"04a\" and \"04b\" so ALSO sort by the record's `file` field which the build adds as the filename stem, e.g. \"04a-builder\"). A record without report yet renders as \"in progress\".\nSection 2 intro must include, in plain English: this page was built by a team of AI agents from the owner's central agent library, each a small text file describing one job; a main session (the \"orchestrator\") ran the dev-lead commander's playbook — spec → research and screen design → two builders in parallel → verifier → code review, with bounded fix loops; and the honest note that in a cloud session the harness allows only one level of agents, so the main session dispatched the crew itself instead of dev-lead doing it. The org diagram lists the distinct agents from the records with their model badge. Also show, per record, duration in minutes when finishedAt exists.\nEverything the estimator shows on screen comes from estimate()'s return value — format numbers with thousands separators and units, steel as tonnes with 1 decimal (kg in a title attribute), OMR with 0 decimals, m³ with 1 decimal. Render the assumptions panel from DEFAULTS grouped by `group` in DEFAULTS order; each row's input is the override source; a \"reset\" per row and a \"reset all\" control. Show source as a link when sourceUrl exists, else plain text; show confidence as a small badge and lastChecked as text. Notes from result.notes render under the results. Rooms: table/cards with add-row and remove-row; the m² shortcut per the UI spec; all inputs constrained by LIMITS; numeric parsing tolerant of blanks (blank → error from validate, never NaN). Load-sample fills every input from SAMPLE_HOUSE; calculate reads the DOM and calls estimate(house, overrides). No innerHTML with unescaped user or record text — escape it (prompts and reports contain angle brackets and backticks).\n\n## scripts/build.mjs\nNode ESM, no dependencies. Reads src/page.html, src/calc.js, every docs/build-log/*.json (sorted by filename; add `file` = filename stem to each record), performs the two replacements, and writes index.html. Fails loudly (non-zero exit, clear message) if a marker is missing, calc.js has an `import` line, or a build-log file isn't valid JSON. Prints one line: the output path, size in KB, and record count. Must be idempotent (same inputs → byte-identical output) because the verify recipe runs `git diff --exit-code -- index.html`.\n\n## Prove it before you report\n1. `node scripts/build.mjs` succeeds with the stub swapped in if src/calc.js isn't there yet — but the committed state must use the real src/calc.js if it exists when you finish; re-run the build against the real file if it has appeared.\n2. `node scripts/smoke.mjs` passes at 1440 and 390 (it clicks load-sample, then calculate, reads [data-result=\"blocks-total\"], and fails on console errors or horizontal scroll). If it fails, fix the page, not the smoke test.\n3. Check dark mode renders (prefers-color-scheme) at least by reading your CSS; and that section 2 renders the existing docs/build-log records (there are several already).\nIf src/calc.js still doesn't exist when you finish, say so and report the smoke result against the stub.\n\nYour final message (plain English, under 25 lines): files written, build output line, smoke result at both widths, whether the real calc.js or the stub was used, any place you deviated from the UI spec and why, and any concern for the reviewer.\n",
+    "report": "Builder B done — page + build script are in and green.\n\nFiles written (only these two, plus the generated output):\n- src/page.html — the whole screen: estimator (section 1) + \"How this page was built\" (section 2), one \u003cstyle>, one page \u003cscript> after both markers, no external assets.\n- scripts/build.mjs — inlines src/calc.js (strips `export ` at column 0) and every docs/build-log/*.json (each tagged with `file` = filename stem) into index.html. Fails loudly on a missing marker, an `import` line in calc.js, a `\u003c/script` inside calc.js, or invalid JSON.\n\nBuild output line: Wrote index.html — 100.6 KB, 5 build-log records. Idempotent: rebuild produces a byte-identical index.html (checked three times).\n\nSmoke: PASS @1440px and PASS @390px (blocks=8,053, no horizontal scroll, zero console errors) — run against the REAL src/calc.js, which had appeared by the time I finished. The throwaway stub was never committed.\n\nAlso verified in a browser at 390px: 33 assumption rows grouped, the three ASSUMPTION_NOTES as read-only text at the top of the panel, changing the rebar price moves the total 9,281 → 12,379 OMR with the \"Using your own numbers for…\" note, per-row Reset and Reset all return it, blank inputs give a plain-English error (never NaN), the m² shortcut generates 14 editable spaces, and section 2 renders records, agent boxes, model pills, duration pills and \"Still in progress\" for unfinished ones. Dark mode checked, legible.\n\nBug found and fixed while testing: the inline validation message appearing/disappearing on blur shifted the page under the pointer, so a tap on the m² checkbox landed elsewhere. The error line now always reserves its space.\n\nDeviations from the UI spec, all deliberate:\n1. Breakdown-table wastage % is read-only, with a link to the Assumptions panel where it is editable (the three wastage defaults map to material keys, not element rows — read-only keeps every number traceable).\n2. Desktop shows \"+ Add room\" top-right only; the full-width one appears at 390px.\n3. Load-sample loads SAMPLE_HOUSE (8,053 blocks, 129.1 m³, 12.9 t, 9,281 OMR). --accent is #2563a8 light / #6fa8e6 dark.\n4. Added one extra collapsed block under the results, \"Where every number came from\", rendered from result.assumptionsUsed — the golden rule made visible.\n\nFor the reviewer: test/ was empty when I finished (builder A's file had not landed) — nothing to do with my files. Worth a second look at my ordering of build-log records: 04a/04b had `order: null`, so I fall back to the numeric prefix of the file stem, then round, then file stem.\n\nOrchestrator: the null order was the dispatch logger's bug (Number(\"04a\")); fixed in the logger and the records. Deviation 1 accepted; deviation 4 welcomed.\n",
+    "finishedAt": "2026-09-22T07:38:36.256Z",
+    "outcome": "page + build script green; smoke PASS 1440/390; wastage column read-only by design",
+    "file": "04b-builder"
+  }
+]</script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function nf(n){ return Number(n).toLocaleString('en-US'); }
+  function fmtInt(n){ return nf(Math.round(Number(n) || 0)); }
+  function fmtDec(n, d){
+    return Number(Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function fmtM3(n){ return fmtDec(n, 1); }
+  function fmtT(n){ return fmtDec(n, 1); }
+  function fmtOmr(n){ return fmtInt(n); }
+  function num(el){
+    if (!el) return NaN;
+    var raw = String(el.value).trim();
+    if (raw === '') return NaN;
+    var v = Number(raw);
+    return isFinite(v) ? v : NaN;
+  }
+  function stepFor(value){
+    var s = String(value);
+    var dot = s.indexOf('.');
+    if (dot < 0) return Math.abs(value) >= 10 ? '1' : '0.1';
+    var decimals = s.length - dot - 1;
+    return String(Math.pow(10, -decimals));
+  }
+  function setFieldError(wrapSel, msgSel, message){
+    var wrap = $(wrapSel), msg = $(msgSel);
+    if (!wrap || !msg) return;
+    if (message){ wrap.classList.add('field-error'); msg.textContent = message; }
+    else { wrap.classList.remove('field-error'); }  /* text stays in place, hidden, so nothing jumps */
+  }
+  function clearFieldErrors(){
+    $$('.field-error').forEach(function(el){ el.classList.remove('field-error'); });
+  }
+
+  /* ---------- assumptions panel ---------- */
+  var GROUP_TITLES = { blocks:'Blocks', walls:'Wall geometry', concrete:'Concrete', steel:'Steel', prices:'Prices', wastage:'Wastage allowances' };
+  var defaultKeys = Object.keys(DEFAULTS);
+
+  function renderAssumptionNotes(){
+    var box = $('#assumption-notes');
+    if (!box || typeof ASSUMPTION_NOTES === 'undefined' || !ASSUMPTION_NOTES.length) return;
+    var html = '<h4>Fixed for this version</h4>';
+    ASSUMPTION_NOTES.forEach(function(n){
+      html += '<p class="muted" style="margin-bottom:var(--space-2)"><strong>' + esc(n.value) + '</strong> — ' +
+        esc(n.rationale) + ' <span class="badge badge-' + esc(n.confidence) + '">' + esc(n.confidence) + '</span> ' +
+        '<span>' + esc(n.source) + ', checked ' + esc(n.lastChecked) + '</span></p>';
+    });
+    box.innerHTML = html;
+  }
+
+  function renderAssumptions(){
+    var host = $('#assumptions-rows');
+    var html = '';
+    var seen = {};
+    var groups = [];
+    defaultKeys.forEach(function(k){
+      var g = DEFAULTS[k].group;
+      if (!seen[g]) { seen[g] = []; groups.push(g); }
+      seen[g].push(k);
+    });
+    groups.forEach(function(g){
+      html += '<h4>' + esc(GROUP_TITLES[g] || g) + '</h4>';
+      seen[g].forEach(function(k){
+        var d = DEFAULTS[k];
+        var srcHtml = d.sourceUrl
+          ? '<a href="' + esc(d.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(d.source) + '</a>'
+          : esc(d.source);
+        var isPct = String(d.unit).indexOf('%') === 0;
+        html += '<div class="a-row" data-row-key="' + esc(k) + '">' +
+          '<label for="ass-' + esc(k) + '">' + esc(d.label) +
+            ' <span class="dot-overridden">● edited</span></label>' +
+          '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
+            'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
+            'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>' +
+          '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>' +
+          '<div class="a-meta"><span class="badge badge-' + esc(d.confidence) + '">' + esc(d.confidence) + '</span>' +
+            '<span>' + srcHtml + '</span><span>checked ' + esc(d.lastChecked) + '</span></div>' +
+        '</div>';
+      });
+    });
+    host.innerHTML = html;
+  }
+
+  function assumptionInput(key){ return document.querySelector('[data-assumption="' + key + '"]'); }
+
+  function refreshOverriddenFlags(){
+    defaultKeys.forEach(function(k){
+      var input = assumptionInput(k);
+      if (!input) return;
+      var row = input.closest('.a-row');
+      var changed = String(input.value).trim() !== '' && Number(input.value) !== Number(DEFAULTS[k].value);
+      row.classList.toggle('overridden', changed);
+      var btn = row.querySelector('[data-action="reset-default"]');
+      if (btn) btn.disabled = !changed;
+    });
+  }
+
+  function collectOverrides(){
+    var out = {};
+    defaultKeys.forEach(function(k){
+      var input = assumptionInput(k);
+      if (!input) return;
+      var raw = String(input.value).trim();
+      if (raw === '') return;
+      var v = Number(raw);
+      if (!isFinite(v)) throw new Error('Please enter a number for "' + DEFAULTS[k].label + '" in Assumptions & prices.');
+      if (v !== Number(DEFAULTS[k].value)) out[k] = v;
+    });
+    return out;
+  }
+
+  /* ---------- room list ---------- */
+  function roomRow(room){
+    var r = room || { name: '', lengthM: '', widthM: '' };
+    var tr = document.createElement('tr');
+    var side = LIMITS.roomSideM;
+    tr.innerHTML =
+      '<td class="cell-full" data-label="Room or space"><input type="text" class="room-name" value="' + esc(r.name) + '" placeholder="e.g. Majlis"></td>' +
+      '<td data-label="Length (m)"><div class="field"><input type="number" class="room-length" inputmode="decimal" min="' + side[0] + '" max="' + side[1] + '" step="0.1" value="' + esc(r.lengthM) + '"><span class="unit">m</span></div></td>' +
+      '<td data-label="Width (m)"><div class="field"><input type="number" class="room-width" inputmode="decimal" min="' + side[0] + '" max="' + side[1] + '" step="0.1" value="' + esc(r.widthM) + '"><span class="unit">m</span></div></td>' +
+      '<td data-label=" "><button type="button" class="btn-ghost" data-action="remove-room">Remove</button></td>';
+    return tr;
+  }
+  function addRoom(room){ $('#room-list').appendChild(roomRow(room)); }
+  function setRooms(rooms){
+    var host = $('#room-list');
+    host.innerHTML = '';
+    rooms.forEach(function(r){ addRoom(r); });
+  }
+  function readRooms(){
+    return $$('#room-list tr').map(function(tr){
+      return {
+        name: String(tr.querySelector('.room-name').value || '').trim(),
+        lengthM: num(tr.querySelector('.room-length')),
+        widthM: num(tr.querySelector('.room-width'))
+      };
+    });
+  }
+
+  /* ---------- results ---------- */
+  function showState(which){
+    ['empty', 'error', 'success'].forEach(function(s){
+      $('#results-' + s).hidden = (s !== which);
+    });
+  }
+
+  function renderBreakdown(result){
+    var keys = Object.keys(result.elements);
+    var rows = '';
+    keys.forEach(function(k){
+      var e = result.elements[k];
+      rows += '<tr>' +
+        '<td class="cell-full" data-label="Part">' + esc(e.label) + '</td>' +
+        '<td class="num" data-label="Concrete">' + (e.concreteM3 ? fmtM3(e.concreteM3) + ' m³' : '—') + '</td>' +
+        '<td class="num" data-label="Steel" title="' + esc(fmtInt(e.steelKg)) + ' kg">' + (e.steelKg ? fmtT(e.steelKg / 1000) + ' t' : '—') + '</td>' +
+        '<td class="num" data-label="Blocks">' + (e.blocks ? fmtInt(e.blocks) + ' pcs' : '—') + '</td>' +
+        '<td class="num" data-label="Wastage">' + fmtDec(e.wastagePct, 0) + ' %</td>' +
+        '<td class="num" data-label="Cost">' + fmtOmr(e.costOmr) + ' OMR</td>' +
+      '</tr>';
+    });
+    var t = result.totals;
+    var foot = '<tr>' +
+      '<td class="cell-full" data-label="Part">All parts</td>' +
+      '<td class="num" data-label="Concrete">' + fmtM3(t.concreteM3) + ' m³</td>' +
+      '<td class="num" data-label="Steel" title="' + esc(fmtInt(t.steelKg)) + ' kg">' + fmtT(t.steelTonnes) + ' t</td>' +
+      '<td class="num" data-label="Blocks">' + fmtInt(t.blocks) + ' pcs</td>' +
+      '<td class="num" data-label="Wastage">—</td>' +
+      '<td class="num" data-label="Cost">' + fmtOmr(t.costOmr) + ' OMR</td>' +
+    '</tr>';
+    $('#breakdown-table').innerHTML =
+      '<table class="responsive"><thead><tr><th>Part</th><th class="num">Concrete</th><th class="num">Steel</th>' +
+      '<th class="num">Blocks</th><th class="num">Wastage</th><th class="num">Cost</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody><tfoot>' + foot + '</tfoot></table>';
+  }
+
+  function renderTrace(result){
+    var rows = (result.assumptionsUsed || []).map(function(a){
+      var src = a.sourceUrl
+        ? '<a href="' + esc(a.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(a.source) + '</a>'
+        : esc(a.source);
+      return '<tr>' +
+        '<td class="cell-full" data-label="Assumption">' + esc(a.label) + (a.overridden ? ' <span style="color:var(--overridden);font-weight:700">● your number</span>' : '') + '</td>' +
+        '<td class="num" data-label="Used">' + esc(nf(a.value)) + ' ' + esc(a.unit) + '</td>' +
+        '<td class="num" data-label="Shipped default">' + esc(nf(a.defaultValue)) + ' ' + esc(a.unit) + '</td>' +
+        '<td class="cell-full" data-label="Source">' + src + ' <span class="badge badge-' + esc(a.confidence) + '">' + esc(a.confidence) + '</span> <span class="muted">checked ' + esc(a.lastChecked) + '</span></td>' +
+      '</tr>';
+    }).join('');
+    $('#trace-table').innerHTML =
+      '<table class="responsive"><thead><tr><th>Assumption</th><th class="num">Used</th><th class="num">Shipped default</th><th>Source</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
+  }
+
+  function renderResult(result){
+    var t = result.totals;
+    $('[data-result="blocks-total"]').textContent = fmtInt(t.blocks);
+    $('[data-result="concrete-total"]').textContent = fmtM3(t.concreteM3);
+    var steelEl = $('[data-result="steel-total"]');
+    steelEl.textContent = fmtT(t.steelTonnes);
+    steelEl.title = fmtInt(t.steelKg) + ' kg';
+    $('[data-result="cost-total"]').textContent = fmtOmr(t.costOmr);
+
+    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden; });
+    var note = $('#overrides-note');
+    if (overridden.length){
+      note.textContent = 'Using your own numbers for: ' + overridden.map(function(a){ return a.label; }).join(', ') + '.';
+      note.hidden = false;
+    } else { note.textContent = ''; note.hidden = true; }
+
+    var i = result.inputs;
+    $('#inputs-summary').textContent = i.floors + ' floor(s) · ' + i.roomCount + ' spaces · ' +
+      fmtM3(i.floorAreaM2) + ' m² per floor · ' + fmtM3(i.builtUpAreaM2) + ' m² built-up · ' +
+      fmtM3(i.netWallAreaM2) + ' m² of wall after doors and windows.';
+
+    $('#results-notes').innerHTML = (result.notes || []).map(function(n){ return '<li>' + esc(n) + '</li>'; }).join('');
+    renderBreakdown(result);
+    renderTrace(result);
+    showState('success');
+  }
+
+  function showError(message){
+    $('#results-error-message').textContent = message;
+    showState('error');
+  }
+
+  function flagImplicatedFields(message){
+    var m = message.toLowerCase();
+    if (m.indexOf('floor') > -1 && m.indexOf('area') === -1) setFieldError('#floors-field', '#floors-msg', message);
+    if (m.indexOf('wall height') > -1) setFieldError('#wall-height-field', '#wall-height-msg', message);
+    if (m.indexOf('room') > -1) setFieldError('#rooms-block', '#rooms-msg', message);
+    if (m.indexOf('m²') > -1 || m.indexOf('area') > -1) setFieldError('#m2-value-wrap', '#m2-msg', message);
+  }
+
+  function preCheck(house){
+    if (!isFinite(house.floors)) throw new Error('Please enter the number of floors (' + LIMITS.floors[0] + ' to ' + LIMITS.floors[1] + ').');
+    if (!isFinite(house.wallHeightM)) throw new Error('Please enter the wall height in metres (' + LIMITS.wallHeightM[0] + ' to ' + LIMITS.wallHeightM[1] + ').');
+    if (!house.rooms.length) throw new Error('Please add at least one room or space before calculating.');
+    for (var i = 0; i < house.rooms.length; i++){
+      var r = house.rooms[i];
+      if (!isFinite(r.lengthM) || !isFinite(r.widthM)) {
+        throw new Error('Every room needs a length and a width in metres — row ' + (i + 1) + ' is missing one.');
+      }
+    }
+  }
+
+  var calculating = false;
+  function calculate(){
+    if (calculating) return;
+    var btn = $('[data-action="calculate"]');
+    calculating = true;
+    btn.disabled = true;
+    var oldLabel = btn.textContent;
+    btn.textContent = 'Calculating…';
+    clearFieldErrors();
+    try {
+      var house = { floors: num($('#floors-input')), wallHeightM: num($('#wall-height-input')), rooms: readRooms() };
+      preCheck(house);
+      var result = estimate(house, collectOverrides());
+      renderResult(result);
+    } catch (err) {
+      var message = (err && err.message) ? err.message : 'Something went wrong — please check your numbers.';
+      showError(message);
+      flagImplicatedFields(message);
+    } finally {
+      btn.textContent = oldLabel;
+      btn.disabled = false;
+      calculating = false;
+    }
+  }
+  function recalcIfShowing(){ if (!$('#results-success').hidden) calculate(); }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function(ev){
+    var el = ev.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+    if (action === 'add-room'){ addRoom(); }
+    else if (action === 'remove-room'){ var tr = el.closest('tr'); if (tr) tr.remove(); recalcIfShowing(); }
+    else if (action === 'calculate'){ calculate(); }
+    else if (action === 'load-sample'){ loadSample(); }
+    else if (action === 'reset-default'){
+      var k = el.getAttribute('data-key');
+      var input = assumptionInput(k);
+      if (input) input.value = DEFAULTS[k].value;
+      refreshOverriddenFlags();
+      recalcIfShowing();
+    }
+    else if (action === 'reset-all'){
+      defaultKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
+      refreshOverriddenFlags();
+      recalcIfShowing();
+    }
+    else if (action === 'open-assumptions'){ $('#assumptions-panel').open = true; }
+  });
+
+  document.addEventListener('input', function(ev){
+    if (ev.target.matches('[data-assumption]')) refreshOverriddenFlags();
+    // Typing in a flagged field clears its warning straight away, so nothing moves on blur.
+    var wrap = ev.target.closest('.field-error');
+    if (wrap) wrap.classList.remove('field-error');
+    var cell = ev.target.closest('td.field-error');
+    if (cell) cell.classList.remove('field-error');
+  });
+  document.addEventListener('change', function(ev){
+    if (ev.target.matches('[data-assumption]')) recalcIfShowing();
+  });
+
+  function boundsCheck(input, range, name){
+    var raw = String(input.value).trim();
+    if (raw === '') return null;
+    var v = Number(raw);
+    if (!isFinite(v) || v < range[0] || v > range[1]){
+      return name + ' should be between ' + range[0] + ' and ' + range[1] + '.';
+    }
+    return null;
+  }
+  document.addEventListener('blur', function(ev){
+    var el = ev.target;
+    if (el === $('#floors-input')) setFieldError('#floors-field', '#floors-msg', boundsCheck(el, LIMITS.floors, 'Number of floors'));
+    else if (el === $('#wall-height-input')) setFieldError('#wall-height-field', '#wall-height-msg', boundsCheck(el, LIMITS.wallHeightM, 'Wall height (m)'));
+    else if (el === $('#m2-shortcut-value')) handleM2Blur();
+    else if (el.classList && (el.classList.contains('room-length') || el.classList.contains('room-width'))){
+      var msg = boundsCheck(el, LIMITS.roomSideM, 'Room size (m)');
+      var td = el.closest('td');
+      if (td) td.classList.toggle('field-error', !!msg);
+      setFieldError('#rooms-block', '#rooms-msg', msg);
+    }
+  }, true);
+
+  /* ---------- m² shortcut ---------- */
+  var m2Generated = false;
+  function handleM2Blur(){
+    var toggle = $('#m2-shortcut-toggle');
+    if (!toggle.checked || m2Generated) return;
+    var input = $('#m2-shortcut-value');
+    var raw = String(input.value).trim();
+    if (raw === '') return;
+    var v = Number(raw);
+    var msg = boundsCheck(input, LIMITS.areaM2, 'Approximate size per floor (m²)');
+    if (msg){ setFieldError('#m2-value-wrap', '#m2-msg', msg); return; }
+    setFieldError('#m2-value-wrap', '#m2-msg', null);
+    try {
+      setRooms(generateRooms(v));
+      m2Generated = true;
+      $('#rooms-block').hidden = false;
+    } catch (err) {
+      setFieldError('#m2-value-wrap', '#m2-msg', err && err.message ? err.message : 'Please enter a sensible floor size.');
+    }
+  }
+  $('#m2-shortcut-toggle').addEventListener('change', function(){
+    var on = this.checked;
+    $('#m2-value-wrap').hidden = !on;
+    if (on){ m2Generated = false; $('#rooms-block').hidden = true; }
+    else { $('#rooms-block').hidden = false; }
+  });
+
+  function loadSample(){
+    clearFieldErrors();
+    $('#m2-shortcut-toggle').checked = false;
+    $('#m2-value-wrap').hidden = true;
+    $('#m2-shortcut-value').value = '';
+    m2Generated = false;
+    $('#rooms-block').hidden = false;
+    $('#floors-input').value = SAMPLE_HOUSE.floors;
+    $('#wall-height-input').value = SAMPLE_HOUSE.wallHeightM;
+    setRooms(SAMPLE_HOUSE.rooms);
+  }
+
+  /* ---------- build story ---------- */
+  function orderOf(rec){
+    if (typeof rec.order === 'number' && isFinite(rec.order)) return rec.order;
+    var m = /^\d+/.exec(String(rec.file || ''));
+    return m ? Number(m[0]) : 0;
+  }
+  function durationMins(rec){
+    if (!rec.finishedAt || !rec.startedAt) return null;
+    var ms = new Date(rec.finishedAt) - new Date(rec.startedAt);
+    if (!isFinite(ms) || ms < 0) return null;
+    var mins = ms / 60000;
+    if (mins < 1) return 'under a minute';
+    return Math.round(mins) + ' min';
+  }
+  function modelClass(model){
+    var m = String(model || '').toLowerCase();
+    if (m.indexOf('haiku') > -1) return 'pill-haiku';
+    if (m.indexOf('opus') > -1) return 'pill-opus';
+    return 'pill-sonnet';
+  }
+  function renderBuildStory(){
+    var node = document.getElementById('build-log');
+    var records = [];
+    if (node){
+      try { records = JSON.parse(node.textContent) || []; }
+      catch (e) { records = []; }
+    }
+    records = records.slice().sort(function(a, b){
+      return (orderOf(a) - orderOf(b)) || ((a.round || 1) - (b.round || 1)) ||
+        String(a.file || '').localeCompare(String(b.file || ''));
+    });
+
+    $('#build-story-intro').innerHTML =
+      '<h3>Built by a team of AI agents</h3>' +
+      '<p>This page was built by a team of AI agents from the owner’s central agent library — each agent is a ' +
+      'small text file that describes one job (write the spec, research the prices, design the screen, build it, check it).</p>' +
+      '<p>A main assistant session (the “orchestrator”) ran the dev-lead commander’s playbook: write the spec, ' +
+      'then research and screen design, then two builders working in parallel, then a verifier, then a code review — ' +
+      'with bounded fix loops if something came back broken.</p>' +
+      '<p class="muted">Honest note: in a cloud session the harness allows only one level of agents, so the main session ' +
+      'dispatched the crew itself instead of the dev-lead agent doing the dispatching.</p>' +
+      '<p class="muted">' + records.length + ' dispatch' + (records.length === 1 ? '' : 'es') + ' recorded below.</p>';
+
+    var agents = [];
+    records.forEach(function(r){
+      if (!agents.some(function(a){ return a.agent === r.agent; })) agents.push({ agent: r.agent, model: r.model });
+    });
+    $('#build-story-diagram').innerHTML =
+      '<h3>Who did what</h3>' +
+      '<div class="org"><div class="org-box org-top">Main session (running the dev-lead playbook)</div>' +
+      '<div class="org-line"></div><div class="org-children">' +
+      agents.map(function(a){
+        return '<div class="org-box"><span>' + esc(a.agent) + '</span><span class="pill ' + modelClass(a.model) + '">' + esc(a.model) + '</span></div>';
+      }).join('') +
+      '</div></div>';
+
+    $('#build-story-timeline').innerHTML = records.map(function(r){
+      var dur = durationMins(r);
+      var sum = '<summary class="tl-sum"><span class="chev">▾</span>' +
+        '<strong>Step ' + esc(orderOf(r)) + ' · ' + esc(r.agent) + '</strong>' +
+        '<span class="pill ' + modelClass(r.model) + '">' + esc(r.model) + '</span>' +
+        ((r.round && r.round > 1) ? '<span class="pill pill-round">round ' + esc(r.round) + '</span>' : '') +
+        (dur ? '<span class="pill pill-round">' + esc(dur) + '</span>' : '') +
+        '<span class="tl-outcome" title="' + esc(r.outcome || '') + '">' + esc(r.outcome || (r.report ? 'finished' : 'in progress')) + '</span>' +
+        '</summary>';
+      var body = '<div class="details-body">' +
+        '<div class="blk-label">What it was asked</div>' +
+        '<div class="prompt-box">' + esc(r.prompt || '') + '</div>' +
+        '<div class="blk-label">What it reported back</div>' +
+        (r.report
+          ? '<div class="report-box">' + esc(r.report) + '</div>'
+          : '<p class="muted" style="margin:0">Still in progress when this page was generated.</p>') +
+        '</div>';
+      return '<div class="tl-item"><details data-dispatch-order="' + esc(orderOf(r)) + '">' + sum + body + '</details></div>';
+    }).join('');
+  }
+
+  /* ---------- start ---------- */
+  $('#floors-input').min = LIMITS.floors[0]; $('#floors-input').max = LIMITS.floors[1]; $('#floors-input').step = '1';
+  $('#wall-height-input').min = LIMITS.wallHeightM[0]; $('#wall-height-input').max = LIMITS.wallHeightM[1]; $('#wall-height-input').step = '0.1';
+  $('#m2-shortcut-value').min = LIMITS.areaM2[0]; $('#m2-shortcut-value').max = LIMITS.areaM2[1]; $('#m2-shortcut-value').step = '1';
+  renderAssumptionNotes();
+  renderAssumptions();
+  refreshOverriddenFlags();
+  showState('empty');
+  renderBuildStory();
+})();
+</script>
+</body>
+</html>

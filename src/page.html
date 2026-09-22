@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>House Material Estimator</title>
+<style>
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --surface-muted:#eef1f5;
+  --text:#14181f; --text-muted:#535c6b;
+  --border:#d5dae1;
+  --accent:#2563a8; --accent-contrast:#ffffff;
+  --danger:#b3261e; --success:#1c6b48; --overridden:#8a5a00;
+  --badge-haiku:#0f6f63; --badge-sonnet:#3b4fb0; --badge-opus:#7a3ba0;
+  --radius:12px; --shadow-1:0 1px 3px rgba(16,24,40,.10),0 1px 2px rgba(16,24,40,.06);
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:24px; --space-6:32px;
+  --content-max:960px;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15181d; --surface:#1e232b; --surface-muted:#262c35;
+    --text:#f1f3f6; --text-muted:#aeb7c4;
+    --border:#39414c;
+    --accent:#6fa8e6; --accent-contrast:#10141a;
+    --danger:#e8867c; --success:#6fc39b; --overridden:#e0b25f;
+    --badge-haiku:#4fc0b2; --badge-sonnet:#8fa0f0; --badge-opus:#9a63c4;
+    --shadow-1:0 1px 3px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:var(--content-max);margin:0 auto;padding:var(--space-5) var(--space-4) var(--space-6)}
+h1{font-size:28px;line-height:1.2;margin:0 0 var(--space-2)}
+h2{font-size:22px;line-height:1.25;margin:var(--space-6) 0 var(--space-3)}
+h3{font-size:17px;margin:0 0 var(--space-3)}
+h4{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin:var(--space-4) 0 var(--space-2)}
+p{margin:0 0 var(--space-3)}
+a{color:var(--accent)}
+.lede{color:var(--text-muted);margin-bottom:var(--space-5)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4);box-shadow:var(--shadow-1);margin-bottom:var(--space-5)}
+.muted{color:var(--text-muted);font-size:14px}
+.stack{display:flex;flex-direction:column;gap:var(--space-5)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)}
+label{display:block;font-size:14px;font-weight:600;margin-bottom:var(--space-1)}
+.field{display:flex;align-items:center;gap:var(--space-2)}
+.field input{flex:1 1 auto;min-width:0}
+input[type=number],input[type=text]{width:100%;min-height:44px;padding:10px var(--space-3);font-size:16px;font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px}
+input:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.unit{font-size:14px;color:var(--text-muted);white-space:nowrap}
+.field-error input{border-color:var(--danger);border-left:4px solid var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
+.field-msg{display:block;visibility:hidden;min-height:1.4em;color:var(--danger);font-size:14px;margin-top:var(--space-1)}
+.field-error .field-msg{visibility:visible}
+button{font-family:inherit;font-size:16px;min-height:44px;padding:10px var(--space-4);border-radius:8px;border:1px solid var(--border);background:var(--surface-muted);color:var(--text);cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:600;width:100%}
+.btn-ghost{background:transparent;font-size:14px;padding:8px var(--space-3)}
+.btn-row{display:flex;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-5)}
+.btn-row .btn-primary{flex:2 1 220px;width:auto}
+.btn-row .btn-secondary{flex:1 1 180px}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin:var(--space-5) 0 var(--space-2)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:var(--space-2) var(--space-2);border-bottom:1px solid var(--border);font-size:15px;vertical-align:middle}
+th{font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:none}
+details{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);box-shadow:var(--shadow-1)}
+summary{list-style:none;cursor:pointer;padding:var(--space-4);min-height:44px;display:flex;align-items:center;gap:var(--space-3);font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary .chev{transition:transform .15s ease;color:var(--text-muted)}
+details[open]>summary .chev{transform:rotate(180deg)}
+.details-body{padding:0 var(--space-4) var(--space-4)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text-muted);white-space:nowrap}
+.badge-Certain{color:var(--success);border-color:var(--success)}
+.badge-Likely{color:var(--accent);border-color:var(--accent)}
+.badge-Guessing{color:var(--overridden);border-color:var(--overridden)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;white-space:nowrap}
+.pill-haiku{background:var(--badge-haiku)}.pill-sonnet{background:var(--badge-sonnet)}.pill-opus{background:var(--badge-opus)}
+.pill-round{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.a-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:var(--space-2) var(--space-3);align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border)}
+.a-row:last-child{border-bottom:none}
+.a-meta{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;font-size:13px;color:var(--text-muted)}
+.dot-overridden{display:none;font-size:12px;font-weight:700;color:var(--overridden)}
+.a-row.overridden .dot-overridden{display:inline}
+.add-room-bottom{display:none}
+.notes-list{margin:var(--space-3) 0 0;padding-left:var(--space-5);color:var(--text-muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3)}
+.stat{background:var(--surface-muted);border-radius:10px;padding:var(--space-3)}
+.stat-label{font-size:13px;color:var(--text-muted)}
+.stat-value{font-size:30px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-word}
+.stat-unit{font-size:13px;color:var(--text-muted)}
+#results-error{border-left:4px solid var(--danger)}
+#results-error .err-msg{color:var(--danger);font-weight:600}
+.timeline{position:relative;padding-left:var(--space-5)}
+.timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:var(--space-4)}
+.tl-item::before{content:"";position:absolute;left:calc(-1 * var(--space-5) + 2px);top:18px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.tl-sum{flex-wrap:wrap}
+.tl-outcome{flex:1 1 180px;min-width:0;font-weight:400;color:var(--text-muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk-label{font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;margin:var(--space-3) 0 var(--space-1)}
+.prompt-box{font-family:var(--font-mono);font-size:13px;line-height:1.45;background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:var(--space-3);max-height:260px;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;word-break:break-word;max-width:100%}
+.report-box{white-space:pre-wrap;word-break:break-word;font-size:15px}
+.org{display:flex;flex-direction:column;align-items:center;gap:var(--space-2)}
+.org-box{background:var(--surface-muted);border:1px solid var(--border);border-radius:8px;padding:var(--space-2) var(--space-3);font-size:14px;text-align:center}
+.org-top{font-weight:700}
+.org-line{width:2px;height:16px;background:var(--border)}
+.org-children{display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:center;max-width:100%}
+.org-children .org-box{display:flex;align-items:center;gap:var(--space-2)}
+[hidden]{display:none !important}
+@media (max-width:700px){
+  h1{font-size:24px}
+  .wrap{padding:var(--space-4) var(--space-3) var(--space-6)}
+  .grid-3{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat-value{font-size:26px}
+  .btn-row{flex-direction:column}
+  .btn-row .btn-primary,.btn-row .btn-secondary{width:100%;flex:1 1 auto}
+  table.responsive thead{display:none}
+  table.responsive,table.responsive tbody,table.responsive tr,table.responsive td,table.responsive tfoot{display:block;width:100%}
+  table.responsive tr{background:var(--surface-muted);border:1px solid var(--border);border-radius:10px;padding:var(--space-3);margin-bottom:var(--space-3)}
+  table.responsive td{border-bottom:none;padding:var(--space-1) 0;display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);text-align:right}
+  table.responsive td::before{content:attr(data-label);font-size:13px;color:var(--text-muted);text-align:left;font-weight:600}
+  table.responsive td.cell-full{display:block;text-align:left}
+  table.responsive td.cell-full::before{display:block;margin-bottom:var(--space-1)}
+  .add-room-bottom{display:block}
+  .a-row{grid-template-columns:1fr}
+  .org-children{flex-direction:column;align-items:stretch}
+  .timeline{padding-left:var(--space-4)}
+  .tl-item::before{left:calc(-1 * var(--space-4) + 1px)}
+  .tl-outcome{white-space:normal;flex-basis:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="estimator">
+  <h1>House material estimator</h1>
+  <p class="lede">Rough quantities of blocks, ready-mix concrete and rebar steel for a villa, with an
+  OMR cost built from prices you can change. Everything runs in this page — nothing is sent anywhere.</p>
+
+  <div class="card">
+    <h3>Your house</h3>
+    <div class="grid-3">
+      <div id="floors-field">
+        <label for="floors-input">Number of floors</label>
+        <div class="field"><input type="number" id="floors-input" inputmode="numeric"><span class="unit">floors</span></div>
+        <p class="field-msg" id="floors-msg"></p>
+      </div>
+      <div id="wall-height-field">
+        <label for="wall-height-input">Wall height</label>
+        <div class="field"><input type="number" id="wall-height-input" inputmode="decimal"><span class="unit">m</span></div>
+        <p class="field-msg" id="wall-height-msg"></p>
+      </div>
+      <div id="m2-field">
+        <label for="m2-shortcut-toggle">Quick shortcut</label>
+        <div class="field" style="align-items:flex-start">
+          <input type="checkbox" id="m2-shortcut-toggle" style="width:24px;height:24px;min-height:24px;flex:0 0 auto;margin-top:10px">
+          <span class="unit" style="white-space:normal">I don't want to type rooms — just use approximate size.</span>
+        </div>
+        <div id="m2-value-wrap" hidden>
+          <label for="m2-shortcut-value">Approximate size per floor</label>
+          <div class="field"><input type="number" id="m2-shortcut-value" inputmode="decimal"><span class="unit">m²</span></div>
+          <p class="field-msg" id="m2-msg"></p>
+          <p class="muted">This creates a starting room list you can edit — changing the size again won't overwrite your edits.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="rooms-block">
+      <div class="subhead">
+        <h3 style="margin:0">Rooms and spaces</h3>
+        <button type="button" data-action="add-room" class="btn-ghost">+ Add room</button>
+      </div>
+      <p class="muted">List every space on the floor — majlis, living, kitchen, bedrooms, bathrooms, hall —
+      because walls run around all of them. The same list is used for each floor.</p>
+      <table class="responsive" id="room-list-table">
+        <thead><tr><th>Room or space</th><th class="num">Length</th><th class="num">Width</th><th></th></tr></thead>
+        <tbody id="room-list"></tbody>
+      </table>
+      <p class="field-msg" id="rooms-msg"></p>
+      <button type="button" data-action="add-room" class="btn-ghost add-room-bottom" style="width:100%;margin-top:var(--space-3)">+ Add room</button>
+    </div>
+  </div>
+
+  <details id="assumptions-panel">
+    <summary><span class="chev">▾</span><span>Assumptions &amp; prices (tap to review or edit)</span></summary>
+    <div class="details-body">
+      <p class="muted">Defaults are sourced construction estimates, not guarantees — see each row's source.</p>
+      <p class="muted"><strong>These are starting-point prices, not quotes — check with your supplier.</strong></p>
+      <div id="assumption-notes"></div>
+      <div class="subhead"><span class="muted">Type over any number to use your own.</span>
+        <button type="button" data-action="reset-all" class="btn-ghost">Reset all to defaults</button></div>
+      <div id="assumptions-rows"></div>
+    </div>
+  </details>
+
+  <div class="btn-row" style="margin-top:var(--space-5)">
+    <button type="button" data-action="calculate" class="btn-primary">Calculate</button>
+    <button type="button" data-action="load-sample" class="btn-secondary">Load sample house</button>
+  </div>
+
+  <div id="results-empty" class="card">
+    <p style="margin:0">Fill in your house details and press Calculate to see quantities.</p>
+  </div>
+
+  <div id="results-error" class="card" hidden>
+    <p class="err-msg" id="results-error-message"></p>
+    <p class="muted" style="margin:0">Fix the highlighted field and press Calculate again.</p>
+  </div>
+
+  <div id="results-success" hidden>
+    <div class="card">
+      <h3>Materials for the whole house</h3>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Total blocks</div><div class="stat-value" data-result="blocks-total">0</div><div class="stat-unit">pcs</div></div>
+        <div class="stat"><div class="stat-label">Ready-mix concrete</div><div class="stat-value" data-result="concrete-total">0</div><div class="stat-unit">m³</div></div>
+        <div class="stat"><div class="stat-label">Rebar steel</div><div class="stat-value" data-result="steel-total" title="">0</div><div class="stat-unit">tonnes</div></div>
+        <div class="stat"><div class="stat-label">Materials cost</div><div class="stat-value" data-result="cost-total">0</div><div class="stat-unit">OMR</div></div>
+      </div>
+      <p class="muted" id="overrides-note" hidden></p>
+      <p class="muted" id="inputs-summary" style="margin-top:var(--space-3)"></p>
+      <ul class="notes-list" id="results-notes"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Breakdown by part of the structure</h3>
+      <div id="breakdown-table"></div>
+      <p class="muted" style="margin-top:var(--space-3)">Wastage is applied already. Change a wastage % in
+      <a href="#assumptions-panel" data-action="open-assumptions">Assumptions &amp; prices</a> and the numbers update.</p>
+    </div>
+
+    <details id="traceability">
+      <summary><span class="chev">▾</span><span>Where every number came from</span></summary>
+      <div class="details-body"><div id="trace-table"></div></div>
+    </details>
+  </div>
+</section>
+
+<section id="build-story">
+  <h2>How this page was built</h2>
+  <div class="card" id="build-story-intro"></div>
+  <div class="card" id="build-story-diagram"></div>
+  <div id="build-story-timeline" class="timeline"></div>
+</section>
+
+</div>
+<!--CALC-->
+<!--BUILDLOG-->
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  function esc(v){
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function nf(n){ return Number(n).toLocaleString('en-US'); }
+  function fmtInt(n){ return nf(Math.round(Number(n) || 0)); }
+  function fmtDec(n, d){
+    return Number(Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function fmtM3(n){ return fmtDec(n, 1); }
+  function fmtT(n){ return fmtDec(n, 1); }
+  function fmtOmr(n){ return fmtInt(n); }
+  function num(el){
+    if (!el) return NaN;
+    var raw = String(el.value).trim();
+    if (raw === '') return NaN;
+    var v = Number(raw);
+    return isFinite(v) ? v : NaN;
+  }
+  function stepFor(value){
+    var s = String(value);
+    var dot = s.indexOf('.');
+    if (dot < 0) return Math.abs(value) >= 10 ? '1' : '0.1';
+    var decimals = s.length - dot - 1;
+    return String(Math.pow(10, -decimals));
+  }
+  function setFieldError(wrapSel, msgSel, message){
+    var wrap = $(wrapSel), msg = $(msgSel);
+    if (!wrap || !msg) return;
+    if (message){ wrap.classList.add('field-error'); msg.textContent = message; }
+    else { wrap.classList.remove('field-error'); }  /* text stays in place, hidden, so nothing jumps */
+  }
+  function clearFieldErrors(){
+    $$('.field-error').forEach(function(el){ el.classList.remove('field-error'); });
+  }
+
+  /* ---------- assumptions panel ---------- */
+  var GROUP_TITLES = { blocks:'Blocks', walls:'Wall geometry', concrete:'Concrete', steel:'Steel', prices:'Prices', wastage:'Wastage allowances' };
+  var defaultKeys = Object.keys(DEFAULTS);
+
+  function renderAssumptionNotes(){
+    var box = $('#assumption-notes');
+    if (!box || typeof ASSUMPTION_NOTES === 'undefined' || !ASSUMPTION_NOTES.length) return;
+    var html = '<h4>Fixed for this version</h4>';
+    ASSUMPTION_NOTES.forEach(function(n){
+      html += '<p class="muted" style="margin-bottom:var(--space-2)"><strong>' + esc(n.value) + '</strong> — ' +
+        esc(n.rationale) + ' <span class="badge badge-' + esc(n.confidence) + '">' + esc(n.confidence) + '</span> ' +
+        '<span>' + esc(n.source) + ', checked ' + esc(n.lastChecked) + '</span></p>';
+    });
+    box.innerHTML = html;
+  }
+
+  function renderAssumptions(){
+    var host = $('#assumptions-rows');
+    var html = '';
+    var seen = {};
+    var groups = [];
+    defaultKeys.forEach(function(k){
+      var g = DEFAULTS[k].group;
+      if (!seen[g]) { seen[g] = []; groups.push(g); }
+      seen[g].push(k);
+    });
+    groups.forEach(function(g){
+      html += '<h4>' + esc(GROUP_TITLES[g] || g) + '</h4>';
+      seen[g].forEach(function(k){
+        var d = DEFAULTS[k];
+        var srcHtml = d.sourceUrl
+          ? '<a href="' + esc(d.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(d.source) + '</a>'
+          : esc(d.source);
+        var isPct = String(d.unit).indexOf('%') === 0;
+        html += '<div class="a-row" data-row-key="' + esc(k) + '">' +
+          '<label for="ass-' + esc(k) + '">' + esc(d.label) +
+            ' <span class="dot-overridden">● edited</span></label>' +
+          '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
+            'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
+            'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>' +
+          '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>' +
+          '<div class="a-meta"><span class="badge badge-' + esc(d.confidence) + '">' + esc(d.confidence) + '</span>' +
+            '<span>' + srcHtml + '</span><span>checked ' + esc(d.lastChecked) + '</span></div>' +
+        '</div>';
+      });
+    });
+    host.innerHTML = html;
+  }
+
+  function assumptionInput(key){ return document.querySelector('[data-assumption="' + key + '"]'); }
+
+  function refreshOverriddenFlags(){
+    defaultKeys.forEach(function(k){
+      var input = assumptionInput(k);
+      if (!input) return;
+      var row = input.closest('.a-row');
+      var changed = String(input.value).trim() !== '' && Number(input.value) !== Number(DEFAULTS[k].value);
+      row.classList.toggle('overridden', changed);
+      var btn = row.querySelector('[data-action="reset-default"]');
+      if (btn) btn.disabled = !changed;
+    });
+  }
+
+  function collectOverrides(){
+    var out = {};
+    defaultKeys.forEach(function(k){
+      var input = assumptionInput(k);
+      if (!input) return;
+      var raw = String(input.value).trim();
+      if (raw === '') return;
+      var v = Number(raw);
+      if (!isFinite(v)) throw new Error('Please enter a number for "' + DEFAULTS[k].label + '" in Assumptions & prices.');
+      if (v !== Number(DEFAULTS[k].value)) out[k] = v;
+    });
+    return out;
+  }
+
+  /* ---------- room list ---------- */
+  function roomRow(room){
+    var r = room || { name: '', lengthM: '', widthM: '' };
+    var tr = document.createElement('tr');
+    var side = LIMITS.roomSideM;
+    tr.innerHTML =
+      '<td class="cell-full" data-label="Room or space"><input type="text" class="room-name" value="' + esc(r.name) + '" placeholder="e.g. Majlis"></td>' +
+      '<td data-label="Length (m)"><div class="field"><input type="number" class="room-length" inputmode="decimal" min="' + side[0] + '" max="' + side[1] + '" step="0.1" value="' + esc(r.lengthM) + '"><span class="unit">m</span></div></td>' +
+      '<td data-label="Width (m)"><div class="field"><input type="number" class="room-width" inputmode="decimal" min="' + side[0] + '" max="' + side[1] + '" step="0.1" value="' + esc(r.widthM) + '"><span class="unit">m</span></div></td>' +
+      '<td data-label=" "><button type="button" class="btn-ghost" data-action="remove-room">Remove</button></td>';
+    return tr;
+  }
+  function addRoom(room){ $('#room-list').appendChild(roomRow(room)); }
+  function setRooms(rooms){
+    var host = $('#room-list');
+    host.innerHTML = '';
+    rooms.forEach(function(r){ addRoom(r); });
+  }
+  function readRooms(){
+    return $$('#room-list tr').map(function(tr){
+      return {
+        name: String(tr.querySelector('.room-name').value || '').trim(),
+        lengthM: num(tr.querySelector('.room-length')),
+        widthM: num(tr.querySelector('.room-width'))
+      };
+    });
+  }
+
+  /* ---------- results ---------- */
+  function showState(which){
+    ['empty', 'error', 'success'].forEach(function(s){
+      $('#results-' + s).hidden = (s !== which);
+    });
+  }
+
+  function renderBreakdown(result){
+    var keys = Object.keys(result.elements);
+    var rows = '';
+    keys.forEach(function(k){
+      var e = result.elements[k];
+      rows += '<tr>' +
+        '<td class="cell-full" data-label="Part">' + esc(e.label) + '</td>' +
+        '<td class="num" data-label="Concrete">' + (e.concreteM3 ? fmtM3(e.concreteM3) + ' m³' : '—') + '</td>' +
+        '<td class="num" data-label="Steel" title="' + esc(fmtInt(e.steelKg)) + ' kg">' + (e.steelKg ? fmtT(e.steelKg / 1000) + ' t' : '—') + '</td>' +
+        '<td class="num" data-label="Blocks">' + (e.blocks ? fmtInt(e.blocks) + ' pcs' : '—') + '</td>' +
+        '<td class="num" data-label="Wastage">' + fmtDec(e.wastagePct, 0) + ' %</td>' +
+        '<td class="num" data-label="Cost">' + fmtOmr(e.costOmr) + ' OMR</td>' +
+      '</tr>';
+    });
+    var t = result.totals;
+    var foot = '<tr>' +
+      '<td class="cell-full" data-label="Part">All parts</td>' +
+      '<td class="num" data-label="Concrete">' + fmtM3(t.concreteM3) + ' m³</td>' +
+      '<td class="num" data-label="Steel" title="' + esc(fmtInt(t.steelKg)) + ' kg">' + fmtT(t.steelTonnes) + ' t</td>' +
+      '<td class="num" data-label="Blocks">' + fmtInt(t.blocks) + ' pcs</td>' +
+      '<td class="num" data-label="Wastage">—</td>' +
+      '<td class="num" data-label="Cost">' + fmtOmr(t.costOmr) + ' OMR</td>' +
+    '</tr>';
+    $('#breakdown-table').innerHTML =
+      '<table class="responsive"><thead><tr><th>Part</th><th class="num">Concrete</th><th class="num">Steel</th>' +
+      '<th class="num">Blocks</th><th class="num">Wastage</th><th class="num">Cost</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody><tfoot>' + foot + '</tfoot></table>';
+  }
+
+  function renderTrace(result){
+    var rows = (result.assumptionsUsed || []).map(function(a){
+      var src = a.sourceUrl
+        ? '<a href="' + esc(a.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(a.source) + '</a>'
+        : esc(a.source);
+      return '<tr>' +
+        '<td class="cell-full" data-label="Assumption">' + esc(a.label) + (a.overridden ? ' <span style="color:var(--overridden);font-weight:700">● your number</span>' : '') + '</td>' +
+        '<td class="num" data-label="Used">' + esc(nf(a.value)) + ' ' + esc(a.unit) + '</td>' +
+        '<td class="num" data-label="Shipped default">' + esc(nf(a.defaultValue)) + ' ' + esc(a.unit) + '</td>' +
+        '<td class="cell-full" data-label="Source">' + src + ' <span class="badge badge-' + esc(a.confidence) + '">' + esc(a.confidence) + '</span> <span class="muted">checked ' + esc(a.lastChecked) + '</span></td>' +
+      '</tr>';
+    }).join('');
+    $('#trace-table').innerHTML =
+      '<table class="responsive"><thead><tr><th>Assumption</th><th class="num">Used</th><th class="num">Shipped default</th><th>Source</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
+  }
+
+  function renderResult(result){
+    var t = result.totals;
+    $('[data-result="blocks-total"]').textContent = fmtInt(t.blocks);
+    $('[data-result="concrete-total"]').textContent = fmtM3(t.concreteM3);
+    var steelEl = $('[data-result="steel-total"]');
+    steelEl.textContent = fmtT(t.steelTonnes);
+    steelEl.title = fmtInt(t.steelKg) + ' kg';
+    $('[data-result="cost-total"]').textContent = fmtOmr(t.costOmr);
+
+    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden; });
+    var note = $('#overrides-note');
+    if (overridden.length){
+      note.textContent = 'Using your own numbers for: ' + overridden.map(function(a){ return a.label; }).join(', ') + '.';
+      note.hidden = false;
+    } else { note.textContent = ''; note.hidden = true; }
+
+    var i = result.inputs;
+    $('#inputs-summary').textContent = i.floors + ' floor(s) · ' + i.roomCount + ' spaces · ' +
+      fmtM3(i.floorAreaM2) + ' m² per floor · ' + fmtM3(i.builtUpAreaM2) + ' m² built-up · ' +
+      fmtM3(i.netWallAreaM2) + ' m² of wall after doors and windows.';
+
+    $('#results-notes').innerHTML = (result.notes || []).map(function(n){ return '<li>' + esc(n) + '</li>'; }).join('');
+    renderBreakdown(result);
+    renderTrace(result);
+    showState('success');
+  }
+
+  function showError(message){
+    $('#results-error-message').textContent = message;
+    showState('error');
+  }
+
+  function flagImplicatedFields(message){
+    var m = message.toLowerCase();
+    if (m.indexOf('floor') > -1 && m.indexOf('area') === -1) setFieldError('#floors-field', '#floors-msg', message);
+    if (m.indexOf('wall height') > -1) setFieldError('#wall-height-field', '#wall-height-msg', message);
+    if (m.indexOf('room') > -1) setFieldError('#rooms-block', '#rooms-msg', message);
+    if (m.indexOf('m²') > -1 || m.indexOf('area') > -1) setFieldError('#m2-value-wrap', '#m2-msg', message);
+  }
+
+  function preCheck(house){
+    if (!isFinite(house.floors)) throw new Error('Please enter the number of floors (' + LIMITS.floors[0] + ' to ' + LIMITS.floors[1] + ').');
+    if (!isFinite(house.wallHeightM)) throw new Error('Please enter the wall height in metres (' + LIMITS.wallHeightM[0] + ' to ' + LIMITS.wallHeightM[1] + ').');
+    if (!house.rooms.length) throw new Error('Please add at least one room or space before calculating.');
+    for (var i = 0; i < house.rooms.length; i++){
+      var r = house.rooms[i];
+      if (!isFinite(r.lengthM) || !isFinite(r.widthM)) {
+        throw new Error('Every room needs a length and a width in metres — row ' + (i + 1) + ' is missing one.');
+      }
+    }
+  }
+
+  var calculating = false;
+  function calculate(){
+    if (calculating) return;
+    var btn = $('[data-action="calculate"]');
+    calculating = true;
+    btn.disabled = true;
+    var oldLabel = btn.textContent;
+    btn.textContent = 'Calculating…';
+    clearFieldErrors();
+    try {
+      var house = { floors: num($('#floors-input')), wallHeightM: num($('#wall-height-input')), rooms: readRooms() };
+      preCheck(house);
+      var result = estimate(house, collectOverrides());
+      renderResult(result);
+    } catch (err) {
+      var message = (err && err.message) ? err.message : 'Something went wrong — please check your numbers.';
+      showError(message);
+      flagImplicatedFields(message);
+    } finally {
+      btn.textContent = oldLabel;
+      btn.disabled = false;
+      calculating = false;
+    }
+  }
+  function recalcIfShowing(){ if (!$('#results-success').hidden) calculate(); }
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', function(ev){
+    var el = ev.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+    if (action === 'add-room'){ addRoom(); }
+    else if (action === 'remove-room'){ var tr = el.closest('tr'); if (tr) tr.remove(); recalcIfShowing(); }
+    else if (action === 'calculate'){ calculate(); }
+    else if (action === 'load-sample'){ loadSample(); }
+    else if (action === 'reset-default'){
+      var k = el.getAttribute('data-key');
+      var input = assumptionInput(k);
+      if (input) input.value = DEFAULTS[k].value;
+      refreshOverriddenFlags();
+      recalcIfShowing();
+    }
+    else if (action === 'reset-all'){
+      defaultKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
+      refreshOverriddenFlags();
+      recalcIfShowing();
+    }
+    else if (action === 'open-assumptions'){ $('#assumptions-panel').open = true; }
+  });
+
+  document.addEventListener('input', function(ev){
+    if (ev.target.matches('[data-assumption]')) refreshOverriddenFlags();
+    // Typing in a flagged field clears its warning straight away, so nothing moves on blur.
+    var wrap = ev.target.closest('.field-error');
+    if (wrap) wrap.classList.remove('field-error');
+    var cell = ev.target.closest('td.field-error');
+    if (cell) cell.classList.remove('field-error');
+  });
+  document.addEventListener('change', function(ev){
+    if (ev.target.matches('[data-assumption]')) recalcIfShowing();
+  });
+
+  function boundsCheck(input, range, name){
+    var raw = String(input.value).trim();
+    if (raw === '') return null;
+    var v = Number(raw);
+    if (!isFinite(v) || v < range[0] || v > range[1]){
+      return name + ' should be between ' + range[0] + ' and ' + range[1] + '.';
+    }
+    return null;
+  }
+  document.addEventListener('blur', function(ev){
+    var el = ev.target;
+    if (el === $('#floors-input')) setFieldError('#floors-field', '#floors-msg', boundsCheck(el, LIMITS.floors, 'Number of floors'));
+    else if (el === $('#wall-height-input')) setFieldError('#wall-height-field', '#wall-height-msg', boundsCheck(el, LIMITS.wallHeightM, 'Wall height (m)'));
+    else if (el === $('#m2-shortcut-value')) handleM2Blur();
+    else if (el.classList && (el.classList.contains('room-length') || el.classList.contains('room-width'))){
+      var msg = boundsCheck(el, LIMITS.roomSideM, 'Room size (m)');
+      var td = el.closest('td');
+      if (td) td.classList.toggle('field-error', !!msg);
+      setFieldError('#rooms-block', '#rooms-msg', msg);
+    }
+  }, true);
+
+  /* ---------- m² shortcut ---------- */
+  var m2Generated = false;
+  function handleM2Blur(){
+    var toggle = $('#m2-shortcut-toggle');
+    if (!toggle.checked || m2Generated) return;
+    var input = $('#m2-shortcut-value');
+    var raw = String(input.value).trim();
+    if (raw === '') return;
+    var v = Number(raw);
+    var msg = boundsCheck(input, LIMITS.areaM2, 'Approximate size per floor (m²)');
+    if (msg){ setFieldError('#m2-value-wrap', '#m2-msg', msg); return; }
+    setFieldError('#m2-value-wrap', '#m2-msg', null);
+    try {
+      setRooms(generateRooms(v));
+      m2Generated = true;
+      $('#rooms-block').hidden = false;
+    } catch (err) {
+      setFieldError('#m2-value-wrap', '#m2-msg', err && err.message ? err.message : 'Please enter a sensible floor size.');
+    }
+  }
+  $('#m2-shortcut-toggle').addEventListener('change', function(){
+    var on = this.checked;
+    $('#m2-value-wrap').hidden = !on;
+    if (on){ m2Generated = false; $('#rooms-block').hidden = true; }
+    else { $('#rooms-block').hidden = false; }
+  });
+
+  function loadSample(){
+    clearFieldErrors();
+    $('#m2-shortcut-toggle').checked = false;
+    $('#m2-value-wrap').hidden = true;
+    $('#m2-shortcut-value').value = '';
+    m2Generated = false;
+    $('#rooms-block').hidden = false;
+    $('#floors-input').value = SAMPLE_HOUSE.floors;
+    $('#wall-height-input').value = SAMPLE_HOUSE.wallHeightM;
+    setRooms(SAMPLE_HOUSE.rooms);
+  }
+
+  /* ---------- build story ---------- */
+  function orderOf(rec){
+    if (typeof rec.order === 'number' && isFinite(rec.order)) return rec.order;
+    var m = /^\d+/.exec(String(rec.file || ''));
+    return m ? Number(m[0]) : 0;
+  }
+  function durationMins(rec){
+    if (!rec.finishedAt || !rec.startedAt) return null;
+    var ms = new Date(rec.finishedAt) - new Date(rec.startedAt);
+    if (!isFinite(ms) || ms < 0) return null;
+    var mins = ms / 60000;
+    if (mins < 1) return 'under a minute';
+    return Math.round(mins) + ' min';
+  }
+  function modelClass(model){
+    var m = String(model || '').toLowerCase();
+    if (m.indexOf('haiku') > -1) return 'pill-haiku';
+    if (m.indexOf('opus') > -1) return 'pill-opus';
+    return 'pill-sonnet';
+  }
+  function renderBuildStory(){
+    var node = document.getElementById('build-log');
+    var records = [];
+    if (node){
+      try { records = JSON.parse(node.textContent) || []; }
+      catch (e) { records = []; }
+    }
+    records = records.slice().sort(function(a, b){
+      return (orderOf(a) - orderOf(b)) || ((a.round || 1) - (b.round || 1)) ||
+        String(a.file || '').localeCompare(String(b.file || ''));
+    });
+
+    $('#build-story-intro').innerHTML =
+      '<h3>Built by a team of AI agents</h3>' +
+      '<p>This page was built by a team of AI agents from the owner’s central agent library — each agent is a ' +
+      'small text file that describes one job (write the spec, research the prices, design the screen, build it, check it).</p>' +
+      '<p>A main assistant session (the “orchestrator”) ran the dev-lead commander’s playbook: write the spec, ' +
+      'then research and screen design, then two builders working in parallel, then a verifier, then a code review — ' +
+      'with bounded fix loops if something came back broken.</p>' +
+      '<p class="muted">Honest note: in a cloud session the harness allows only one level of agents, so the main session ' +
+      'dispatched the crew itself instead of the dev-lead agent doing the dispatching.</p>' +
+      '<p class="muted">' + records.length + ' dispatch' + (records.length === 1 ? '' : 'es') + ' recorded below.</p>';
+
+    var agents = [];
+    records.forEach(function(r){
+      if (!agents.some(function(a){ return a.agent === r.agent; })) agents.push({ agent: r.agent, model: r.model });
+    });
+    $('#build-story-diagram').innerHTML =
+      '<h3>Who did what</h3>' +
+      '<div class="org"><div class="org-box org-top">Main session (running the dev-lead playbook)</div>' +
+      '<div class="org-line"></div><div class="org-children">' +
+      agents.map(function(a){
+        return '<div class="org-box"><span>' + esc(a.agent) + '</span><span class="pill ' + modelClass(a.model) + '">' + esc(a.model) + '</span></div>';
+      }).join('') +
+      '</div></div>';
+
+    $('#build-story-timeline').innerHTML = records.map(function(r){
+      var dur = durationMins(r);
+      var sum = '<summary class="tl-sum"><span class="chev">▾</span>' +
+        '<strong>Step ' + esc(orderOf(r)) + ' · ' + esc(r.agent) + '</strong>' +
+        '<span class="pill ' + modelClass(r.model) + '">' + esc(r.model) + '</span>' +
+        ((r.round && r.round > 1) ? '<span class="pill pill-round">round ' + esc(r.round) + '</span>' : '') +
+        (dur ? '<span class="pill pill-round">' + esc(dur) + '</span>' : '') +
+        '<span class="tl-outcome" title="' + esc(r.outcome || '') + '">' + esc(r.outcome || (r.report ? 'finished' : 'in progress')) + '</span>' +
+        '</summary>';
+      var body = '<div class="details-body">' +
+        '<div class="blk-label">What it was asked</div>' +
+        '<div class="prompt-box">' + esc(r.prompt || '') + '</div>' +
+        '<div class="blk-label">What it reported back</div>' +
+        (r.report
+          ? '<div class="report-box">' + esc(r.report) + '</div>'
+          : '<p class="muted" style="margin:0">Still in progress when this page was generated.</p>') +
+        '</div>';
+      return '<div class="tl-item"><details data-dispatch-order="' + esc(orderOf(r)) + '">' + sum + body + '</details></div>';
+    }).join('');
+  }
+
+  /* ---------- start ---------- */
+  $('#floors-input').min = LIMITS.floors[0]; $('#floors-input').max = LIMITS.floors[1]; $('#floors-input').step = '1';
+  $('#wall-height-input').min = LIMITS.wallHeightM[0]; $('#wall-height-input').max = LIMITS.wallHeightM[1]; $('#wall-height-input').step = '0.1';
+  $('#m2-shortcut-value').min = LIMITS.areaM2[0]; $('#m2-shortcut-value').max = LIMITS.areaM2[1]; $('#m2-shortcut-value').step = '1';
+  renderAssumptionNotes();
+  renderAssumptions();
+  refreshOverriddenFlags();
+  showState('empty');
+  renderBuildStory();
+})();
+</script>
+</body>
+</html>
