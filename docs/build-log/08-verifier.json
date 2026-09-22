@@ -1,0 +1,8 @@
+{
+  "order": 8,
+  "agent": "verifier",
+  "model": "haiku",
+  "round": 2,
+  "startedAt": "2026-09-22T07:48:34.328Z",
+  "prompt": "Repo: /home/user/House-building. Second verification round after a fix round. Read docs/CONVENTIONS.md and run its \"Verify recipe\" exactly, in order, from the repo root:\n1. node --test test/*.mjs\n2. node scripts/build.mjs\n3. git diff --exit-code -- index.html\n4. node scripts/smoke.mjs\nReport one line per step: PASS or FAIL with the exact error output for a FAIL. Also report the total test count from step 1. Do not fix or edit anything.\n"
+}

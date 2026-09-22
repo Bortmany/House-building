@@ -82,6 +82,10 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .a-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:var(--space-2) var(--space-3);align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border)}
 .a-row:last-child{border-bottom:none}
 .a-meta{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;font-size:13px;color:var(--text-muted)}
+.readonly-value{font-variant-numeric:tabular-nums;font-weight:600;padding:10px 0}
+.a-label{font-size:14px;font-weight:600}
+.tag-reference{font-size:12px;color:var(--text-muted);border:1px dashed var(--border);border-radius:999px;padding:2px 8px;white-space:normal;display:inline-block;justify-self:start}
+.a-row-reference{opacity:.85}
 .dot-overridden{display:none;font-size:12px;font-weight:700;color:var(--overridden)}
 .a-row.overridden .dot-overridden{display:inline}
 .add-room-bottom{display:none}
@@ -294,13 +298,18 @@ details[open]>summary .chev{transform:rotate(180deg)}
   /* ---------- assumptions panel ---------- */
   var GROUP_TITLES = { blocks:'Blocks', walls:'Wall geometry', concrete:'Concrete', steel:'Steel', prices:'Prices', wastage:'Wastage allowances' };
   var defaultKeys = Object.keys(DEFAULTS);
+  // A row is used in the maths unless the calculator says otherwise.
+  function isUsed(row){ return !row || row.used !== false; }
+  var editableKeys = defaultKeys.filter(function(k){ return isUsed(DEFAULTS[k]); });
 
   function renderAssumptionNotes(){
     var box = $('#assumption-notes');
     if (!box || typeof ASSUMPTION_NOTES === 'undefined' || !ASSUMPTION_NOTES.length) return;
     var html = '<h4>Fixed for this version</h4>';
     ASSUMPTION_NOTES.forEach(function(n){
-      html += '<p class="muted" style="margin-bottom:var(--space-2)"><strong>' + esc(n.value) + '</strong> — ' +
+      // A plain "true"/"false" is not worth showing the reader — the rationale says it better.
+      var headline = /^(true|false)$/i.test(String(n.value)) ? '' : '<strong>' + esc(n.value) + '</strong> — ';
+      html += '<p class="muted" style="margin-bottom:var(--space-2)">' + headline +
         esc(n.rationale) + ' <span class="badge badge-' + esc(n.confidence) + '">' + esc(n.confidence) + '</span> ' +
         '<span>' + esc(n.source) + ', checked ' + esc(n.lastChecked) + '</span></p>';
     });
@@ -325,13 +334,19 @@ details[open]>summary .chev{transform:rotate(180deg)}
           ? '<a href="' + esc(d.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(d.source) + '</a>'
           : esc(d.source);
         var isPct = String(d.unit).indexOf('%') === 0;
-        html += '<div class="a-row" data-row-key="' + esc(k) + '">' +
-          '<label for="ass-' + esc(k) + '">' + esc(d.label) +
-            ' <span class="dot-overridden">● edited</span></label>' +
-          '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
-            'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
-            'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>' +
-          '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>' +
+        var valueCell = isUsed(d)
+          ? '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
+              'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
+              'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>'
+          : '<div class="field"><span class="readonly-value">' + esc(nf(d.value)) + '</span><span class="unit">' + esc(d.unit) + '</span></div>';
+        var resetCell = isUsed(d)
+          ? '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>'
+          : '<span class="tag-reference">reference only — not used in v1</span>';
+        html += '<div class="a-row' + (isUsed(d) ? '' : ' a-row-reference') + '" data-row-key="' + esc(k) + '">' +
+          (isUsed(d)
+            ? '<label for="ass-' + esc(k) + '">' + esc(d.label) + ' <span class="dot-overridden">● edited</span></label>'
+            : '<span class="a-label">' + esc(d.label) + '</span>') +
+          valueCell + resetCell +
           '<div class="a-meta"><span class="badge badge-' + esc(d.confidence) + '">' + esc(d.confidence) + '</span>' +
             '<span>' + srcHtml + '</span><span>checked ' + esc(d.lastChecked) + '</span></div>' +
         '</div>';
@@ -343,7 +358,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
   function assumptionInput(key){ return document.querySelector('[data-assumption="' + key + '"]'); }
 
   function refreshOverriddenFlags(){
-    defaultKeys.forEach(function(k){
+    editableKeys.forEach(function(k){
       var input = assumptionInput(k);
       if (!input) return;
       var row = input.closest('.a-row');
@@ -356,7 +371,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
 
   function collectOverrides(){
     var out = {};
-    defaultKeys.forEach(function(k){
+    editableKeys.forEach(function(k){   // never send a reference-only key
       var input = assumptionInput(k);
       if (!input) return;
       var raw = String(input.value).trim();
@@ -405,6 +420,20 @@ details[open]>summary .chev{transform:rotate(180deg)}
 
   function renderBreakdown(result){
     var keys = Object.keys(result.elements);
+    // Both wastage figures come from the result itself, never typed in here.
+    function usedValue(key){
+      var row = (result.assumptionsUsed || []).filter(function(a){ return a.key === key; })[0];
+      return row ? row.value : null;
+    }
+    var steelPct = usedValue('rebar_wastage_pct');
+    var concretePct = usedValue('concrete_wastage_pct');
+    function wastageText(e){
+      var base = (e.blocks > 0 && !e.concreteM3)
+        ? fmtDec(e.wastagePct, 0) + ' % blocks'
+        : fmtDec(concretePct == null ? e.wastagePct : concretePct, 0) + ' % concrete';
+      if (e.steelKg > 0 && steelPct != null) base += ' · ' + fmtDec(steelPct, 0) + ' % steel';
+      return base;
+    }
     var rows = '';
     keys.forEach(function(k){
       var e = result.elements[k];
@@ -413,7 +442,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
         '<td class="num" data-label="Concrete">' + (e.concreteM3 ? fmtM3(e.concreteM3) + ' m³' : '—') + '</td>' +
         '<td class="num" data-label="Steel" title="' + esc(fmtInt(e.steelKg)) + ' kg">' + (e.steelKg ? fmtT(e.steelKg / 1000) + ' t' : '—') + '</td>' +
         '<td class="num" data-label="Blocks">' + (e.blocks ? fmtInt(e.blocks) + ' pcs' : '—') + '</td>' +
-        '<td class="num" data-label="Wastage">' + fmtDec(e.wastagePct, 0) + ' %</td>' +
+        '<td class="num" data-label="Concrete / block wastage">' + esc(wastageText(e)) + '</td>' +
         '<td class="num" data-label="Cost">' + fmtOmr(e.costOmr) + ' OMR</td>' +
       '</tr>';
     });
@@ -423,17 +452,19 @@ details[open]>summary .chev{transform:rotate(180deg)}
       '<td class="num" data-label="Concrete">' + fmtM3(t.concreteM3) + ' m³</td>' +
       '<td class="num" data-label="Steel" title="' + esc(fmtInt(t.steelKg)) + ' kg">' + fmtT(t.steelTonnes) + ' t</td>' +
       '<td class="num" data-label="Blocks">' + fmtInt(t.blocks) + ' pcs</td>' +
-      '<td class="num" data-label="Wastage">—</td>' +
+      '<td class="num" data-label="Concrete / block wastage">—</td>' +
       '<td class="num" data-label="Cost">' + fmtOmr(t.costOmr) + ' OMR</td>' +
     '</tr>';
     $('#breakdown-table').innerHTML =
       '<table class="responsive"><thead><tr><th>Part</th><th class="num">Concrete</th><th class="num">Steel</th>' +
-      '<th class="num">Blocks</th><th class="num">Wastage</th><th class="num">Cost</th></tr></thead>' +
+      '<th class="num">Blocks</th><th class="num">Concrete / block wastage</th><th class="num">Cost</th></tr></thead>' +
       '<tbody>' + rows + '</tbody><tfoot>' + foot + '</tfoot></table>';
   }
 
   function renderTrace(result){
-    var rows = (result.assumptionsUsed || []).map(function(a){
+    var all = result.assumptionsUsed || [];
+    var reference = all.filter(function(a){ return !isUsed(a); });
+    var rows = all.filter(isUsed).map(function(a){
       var src = a.sourceUrl
         ? '<a href="' + esc(a.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(a.source) + '</a>'
         : esc(a.source);
@@ -444,9 +475,14 @@ details[open]>summary .chev{transform:rotate(180deg)}
         '<td class="cell-full" data-label="Source">' + src + ' <span class="badge badge-' + esc(a.confidence) + '">' + esc(a.confidence) + '</span> <span class="muted">checked ' + esc(a.lastChecked) + '</span></td>' +
       '</tr>';
     }).join('');
+    var referenceHtml = reference.length
+      ? '<h4>Reference only — not used in this calculation</h4><p class="muted">' +
+          reference.map(function(a){ return esc(a.label) + ' (' + esc(nf(a.value)) + ' ' + esc(a.unit) + ')'; }).join(' · ') +
+        '</p>'
+      : '';
     $('#trace-table').innerHTML =
       '<table class="responsive"><thead><tr><th>Assumption</th><th class="num">Used</th><th class="num">Shipped default</th><th>Source</th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>';
+      '<tbody>' + rows + '</tbody></table>' + referenceHtml;
   }
 
   function renderResult(result){
@@ -458,7 +494,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
     steelEl.title = fmtInt(t.steelKg) + ' kg';
     $('[data-result="cost-total"]').textContent = fmtOmr(t.costOmr);
 
-    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden; });
+    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden && isUsed(a); });
     var note = $('#overrides-note');
     if (overridden.length){
       note.textContent = 'Using your own numbers for: ' + overridden.map(function(a){ return a.label; }).join(', ') + '.';
@@ -483,16 +519,23 @@ details[open]>summary .chev{transform:rotate(180deg)}
 
   function flagImplicatedFields(message){
     var m = message.toLowerCase();
-    if (m.indexOf('floor') > -1 && m.indexOf('area') === -1) setFieldError('#floors-field', '#floors-msg', message);
+    var aboutFloorSize = m.indexOf('per floor') > -1 || m.indexOf('area') > -1;
+    if (m.indexOf('floor') > -1 && !aboutFloorSize) setFieldError('#floors-field', '#floors-msg', message);
     if (m.indexOf('wall height') > -1) setFieldError('#wall-height-field', '#wall-height-msg', message);
-    if (m.indexOf('room') > -1) setFieldError('#rooms-block', '#rooms-msg', message);
-    if (m.indexOf('m²') > -1 || m.indexOf('area') > -1) setFieldError('#m2-value-wrap', '#m2-msg', message);
+    var shortcutOn = $('#m2-shortcut-toggle').checked && !$$('#room-list tr').length;
+    if (m.indexOf('room') > -1 && !shortcutOn) setFieldError('#rooms-block', '#rooms-msg', message);
+    if (m.indexOf('m²') > -1 || aboutFloorSize) setFieldError('#m2-value-wrap', '#m2-msg', message);
   }
 
   function preCheck(house){
     if (!isFinite(house.floors)) throw new Error('Please enter the number of floors (' + LIMITS.floors[0] + ' to ' + LIMITS.floors[1] + ').');
     if (!isFinite(house.wallHeightM)) throw new Error('Please enter the wall height in metres (' + LIMITS.wallHeightM[0] + ' to ' + LIMITS.wallHeightM[1] + ').');
-    if (!house.rooms.length) throw new Error('Please add at least one room or space before calculating.');
+    if (!house.rooms.length) {
+      if ($('#m2-shortcut-toggle').checked) {
+        throw new Error('Please enter the approximate size per floor in m² (' + LIMITS.areaM2[0] + ' to ' + LIMITS.areaM2[1] + ') so the room list can be created.');
+      }
+      throw new Error('Please add at least one room or space before calculating.');
+    }
     for (var i = 0; i < house.rooms.length; i++){
       var r = house.rooms[i];
       if (!isFinite(r.lengthM) || !isFinite(r.widthM)) {
@@ -544,7 +587,7 @@ details[open]>summary .chev{transform:rotate(180deg)}
       recalcIfShowing();
     }
     else if (action === 'reset-all'){
-      defaultKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
+      editableKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
       refreshOverriddenFlags();
       recalcIfShowing();
     }

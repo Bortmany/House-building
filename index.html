@@ -82,6 +82,10 @@ details[open]>summary .chev{transform:rotate(180deg)}
 .a-row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:var(--space-2) var(--space-3);align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border)}
 .a-row:last-child{border-bottom:none}
 .a-meta{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;font-size:13px;color:var(--text-muted)}
+.readonly-value{font-variant-numeric:tabular-nums;font-weight:600;padding:10px 0}
+.a-label{font-size:14px;font-weight:600}
+.tag-reference{font-size:12px;color:var(--text-muted);border:1px dashed var(--border);border-radius:999px;padding:2px 8px;white-space:normal;display:inline-block;justify-self:start}
+.a-row-reference{opacity:.85}
 .dot-overridden{display:none;font-size:12px;font-weight:700;color:var(--overridden)}
 .a-row.overridden .dot-overridden{display:inline}
 .add-room-bottom{display:none}
@@ -266,43 +270,43 @@ details[open]>summary .chev{transform:rotate(180deg)}
 const DEFAULTS = {
   /* --- Section 1: blocks --- */
   block_ext_length: {
-    value: 400, unit: 'mm', label: 'External block length', group: 'blocks',
+    value: 400, unit: 'mm', label: 'External block length', group: 'blocks', used: false,
     rationale: 'Standard GCC hollow block face size (400x200xh).',
     source: 'Al Madina Cement Products (mcp.om) product range', sourceUrl: 'https://mcp.om',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_ext_height: {
-    value: 200, unit: 'mm', label: 'Block face height', group: 'blocks',
+    value: 200, unit: 'mm', label: 'Block face height', group: 'blocks', used: false,
     rationale: 'Standard block face height.',
     source: 'Al Madina Cement Products (mcp.om)', sourceUrl: 'https://mcp.om',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_ext_thickness: {
-    value: 200, unit: 'mm', label: 'External wall block thickness', group: 'blocks',
+    value: 200, unit: 'mm', label: 'External wall block thickness', group: 'blocks', used: false,
     rationale: 'Typical external wall block — load path plus insulation mass.',
     source: 'Common GCC villa spec (Muscat Municipality practice)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_int_thickness: {
-    value: 150, unit: 'mm', label: 'Internal wall block thickness', group: 'blocks',
+    value: 150, unit: 'mm', label: 'Internal wall block thickness', group: 'blocks', used: false,
     rationale: 'Typical internal partition block, non-load-bearing.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   mortar_joint_mm: {
-    value: 10, unit: 'mm', label: 'Mortar joint thickness', group: 'blocks',
+    value: 10, unit: 'mm', label: 'Mortar joint thickness', group: 'blocks', used: false,
     rationale: 'Standard bed and head joint.',
     source: 'General masonry practice (BS 5628 / regional norm)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   blocks_per_m2_wall: {
-    value: 12.5, unit: 'pcs/m2', label: 'Blocks per square metre of wall', group: 'blocks',
+    value: 12.5, unit: 'pcs/m2', label: 'Blocks per square metre of wall', group: 'blocks', used: true,
     rationale: 'A 400x200 block plus a 10 mm joint covers about 0.0861 m2 (11.6 blocks/m2), rounded up to the estimator rule of thumb of 12.5 to cover cutting.',
     source: 'Standard block-count rule of thumb used by GCC estimators', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   block_wastage_pct: {
-    value: 5, unit: '%', label: 'Block wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Block wastage', group: 'wastage', used: true,
     rationale: 'Breakage and cutting at corners and openings.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -310,37 +314,37 @@ const DEFAULTS = {
 
   /* --- Section 2: wall geometry --- */
   wall_height_default_m: {
-    value: 3.0, unit: 'm', label: 'Default wall height', group: 'walls',
+    value: 3.0, unit: 'm', label: 'Default wall height', group: 'walls', used: false,
     rationale: 'Typical Muscat villa floor-to-floor height.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   ext_wall_perimeter_factor: {
-    value: 1.0, unit: '-', label: 'External wall length factor (take-off method)', group: 'walls',
+    value: 1.0, unit: '-', label: 'External wall length factor (take-off method)', group: 'walls', used: false,
     rationale: 'External wall length equals the building perimeter. Superseded for this calculator by ext_perimeter_shape_factor (section 7), which derives the perimeter from floor area; kept here for traceability.',
     source: 'Standard quantity take-off method', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   int_wall_per_room_factor: {
-    value: 0.5, unit: '-', label: 'Internal wall length per space', group: 'walls',
+    value: 0.5, unit: '-', label: 'Internal wall length per space', group: 'walls', used: true,
     rationale: 'Internal wall length is about 0.5 x (length + width) per space — two shared walls per space on average, which avoids counting a shared wall twice.',
     source: 'Rule of thumb used in early-stage GCC villa BOQs', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   opening_deduction_pct: {
-    value: 15, unit: '%', label: 'Doors and windows deducted from wall area', group: 'walls',
+    value: 15, unit: '%', label: 'Doors and windows deducted from wall area', group: 'walls', used: true,
     rationale: 'Typical doors plus windows as a share of gross wall area for a villa (10-20% range).',
     source: 'Common GCC estimating rule of thumb', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   ext_wall_thickness_mm: {
-    value: 200, unit: 'mm', label: 'External wall thickness', group: 'walls',
+    value: 200, unit: 'mm', label: 'External wall thickness', group: 'walls', used: false,
     rationale: 'Same as block_ext_thickness.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   int_wall_thickness_mm: {
-    value: 150, unit: 'mm', label: 'Internal wall thickness', group: 'walls',
+    value: 150, unit: 'mm', label: 'Internal wall thickness', group: 'walls', used: false,
     rationale: 'Same as block_int_thickness.',
     source: 'Common GCC villa spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -348,43 +352,43 @@ const DEFAULTS = {
 
   /* --- Section 3: concrete --- */
   concrete_m3_per_m2_footings_tiebeams: {
-    value: 0.06, unit: 'm3/m2', label: 'Concrete for footings and tie beams', group: 'concrete',
+    value: 0.06, unit: 'm3/m2', label: 'Concrete for footings and tie beams', group: 'concrete', used: true,
     rationale: 'Isolated pad footings plus a ground-beam allowance, ground floor only.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_columns: {
-    value: 0.025, unit: 'm3/m2 per floor', label: 'Concrete for columns', group: 'concrete',
+    value: 0.025, unit: 'm3/m2 per floor', label: 'Concrete for columns', group: 'concrete', used: true,
     rationale: 'Typical column volume for a villa grid (4-5 m spans, 250x250 to 300x300 columns).',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_beams: {
-    value: 0.045, unit: 'm3/m2 per floor', label: 'Concrete for beams', group: 'concrete',
+    value: 0.045, unit: 'm3/m2 per floor', label: 'Concrete for beams', group: 'concrete', used: true,
     rationale: 'Typical tie and floor beam volume for villa spans.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   slab_thickness_m: {
-    value: 0.15, unit: 'm', label: 'Slab thickness', group: 'concrete',
-    rationale: 'Standard villa solid slab thickness (125-150 mm range).',
+    value: 0.15, unit: 'm', label: 'Slab thickness', group: 'concrete', used: true,
+    rationale: 'Standard villa solid slab thickness (125-150 mm range). This is the editable number; the concrete per m2 of slab is derived from it.',
     source: 'Common GCC villa structural spec', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_slab: {
-    value: 0.15, unit: 'm3/m2 per floor', label: 'Concrete for floor and roof slabs', group: 'concrete',
-    rationale: 'Slab thickness x 1 m2.',
+    value: 0.15, unit: 'm3/m2 per floor', label: 'Concrete for floor and roof slabs', group: 'concrete', used: false,
+    rationale: 'Derived, not separately editable: slab_thickness_m x 1 m2. Change the slab thickness instead and this follows it.',
     source: 'Direct geometry', sourceUrl: null,
     confidence: 'Certain', lastChecked: '2026-09-22'
   },
   concrete_m3_per_m2_ground_slab: {
-    value: 0.10, unit: 'm3/m2', label: 'Concrete for the ground slab', group: 'concrete',
+    value: 0.10, unit: 'm3/m2', label: 'Concrete for the ground slab', group: 'concrete', used: true,
     rationale: 'Ground floor plinth and blinding slab, ground floor only.',
     source: 'Rule-of-thumb GCC villa BOQ ratio', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   concrete_wastage_pct: {
-    value: 5, unit: '%', label: 'Concrete wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Concrete wastage', group: 'wastage', used: true,
     rationale: 'Spillage, over-excavation and formwork tolerance.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -392,31 +396,37 @@ const DEFAULTS = {
 
   /* --- Section 4: rebar steel --- */
   rebar_kg_per_m3_footings: {
-    value: 80, unit: 'kg/m3', label: 'Steel in footings', group: 'steel',
+    value: 80, unit: 'kg/m3', label: 'Steel in footings', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 60-100 kg/m3 range for isolated footings.',
     source: 'General RC design rule of thumb (regional structural practice)', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_columns: {
-    value: 150, unit: 'kg/m3', label: 'Steel in columns', group: 'steel',
+    value: 150, unit: 'kg/m3', label: 'Steel in columns', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 120-180 kg/m3 range for villa columns.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_beams: {
-    value: 130, unit: 'kg/m3', label: 'Steel in beams', group: 'steel',
+    value: 130, unit: 'kg/m3', label: 'Steel in beams', group: 'steel', used: true,
     rationale: 'Mid-point of the typical 100-160 kg/m3 range for beams.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   rebar_kg_per_m3_slabs: {
-    value: 90, unit: 'kg/m3', label: 'Steel in slabs', group: 'steel',
-    rationale: 'Mid-point of the typical 70-110 kg/m3 range for solid slabs. Also used for the ground slab mesh — see the ground slab comment in estimate().',
+    value: 90, unit: 'kg/m3', label: 'Steel in slabs', group: 'steel', used: true,
+    rationale: 'Mid-point of the typical 70-110 kg/m3 range for solid slabs.',
     source: 'General RC design rule of thumb', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
+  rebar_kg_per_m3_ground_slab: {
+    value: 50, unit: 'kg/m3', label: 'Steel in the ground slab', group: 'steel', used: true,
+    rationale: 'A ground-bearing slab carries a light mesh, not a suspended-slab cage; typical 40-60 kg/m3.',
+    source: 'General RC practice for ground-bearing slabs', sourceUrl: null,
+    confidence: 'Guessing', lastChecked: '2026-09-22'
+  },
   rebar_wastage_pct: {
-    value: 5, unit: '%', label: 'Steel wastage', group: 'wastage',
+    value: 5, unit: '%', label: 'Steel wastage', group: 'wastage', used: true,
     rationale: 'Offcuts and laps.',
     source: 'Common contractor allowance', sourceUrl: null,
     confidence: 'Likely', lastChecked: '2026-09-22'
@@ -424,43 +434,43 @@ const DEFAULTS = {
 
   /* --- Section 5: prices (starting points, not quotes) --- */
   price_omr_block_200: {
-    value: 0.250, unit: 'OMR/pc', label: 'Price per 200 mm block', group: 'prices',
+    value: 0.250, unit: 'OMR/pc', label: 'Price per 200 mm block', group: 'prices', used: true,
     rationale: 'No live listed price found; estimated from the typical GCC 200 mm hollow block range (about 0.200-0.300 OMR/pc).',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_block_150: {
-    value: 0.190, unit: 'OMR/pc', label: 'Price per 150 mm block', group: 'prices',
+    value: 0.190, unit: 'OMR/pc', label: 'Price per 150 mm block', group: 'prices', used: true,
     rationale: 'Same as above; a 150 mm block is typically 20-25% cheaper than a 200 mm one.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_rebar_tonne: {
-    value: 260, unit: 'OMR/tonne', label: 'Price per tonne of rebar steel', group: 'prices',
+    value: 260, unit: 'OMR/tonne', label: 'Price per tonne of rebar steel', group: 'prices', used: true,
     rationale: 'Domestic Oman rebar reported at OMR 253-259 per tonne; delivered price runs higher for small orders.',
     source: 'Al Yusr International — Rebar Prices in Oman', sourceUrl: 'https://alyusroman.com/rebar-price-oman/',
     confidence: 'Likely', lastChecked: '2026-09-22'
   },
   price_omr_readymix_c30_m3: {
-    value: 32, unit: 'OMR/m3', label: 'Price per m3 of C30 ready-mix concrete', group: 'prices',
+    value: 32, unit: 'OMR/m3', label: 'Price per m3 of C30 ready-mix concrete', group: 'prices', used: true,
     rationale: 'No Oman figure could be sourced; estimated from the typical GCC C30 ready-mix range (28-38 OMR/m3).',
     source: 'Could not source a live Oman price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_cement_bag_50kg: {
-    value: 1.900, unit: 'OMR/bag', label: 'Price per 50 kg cement bag', group: 'prices',
+    value: 1.900, unit: 'OMR/bag', label: 'Price per 50 kg cement bag', group: 'prices', used: false,
     rationale: 'Recent Oman buyer target range of 1.8-2.0 OMR per 50 kg bag. Shown for reference; mortar is not counted in v1.',
     source: 'go4WorldBusiness — Cement Bags Buyers, Oman', sourceUrl: 'https://www.go4worldbusiness.com/buyers/worldwide/cement-bags.html',
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_sand_m3: {
-    value: 6, unit: 'OMR/m3', label: 'Price per m3 of sand', group: 'prices',
+    value: 6, unit: 'OMR/m3', label: 'Price per m3 of sand', group: 'prices', used: false,
     rationale: 'Not sourced for Oman specifically; typical GCC building-sand price. Shown for reference; mortar is not counted in v1.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
   },
   price_omr_aggregate_m3: {
-    value: 7, unit: 'OMR/m3', label: 'Price per m3 of aggregate', group: 'prices',
+    value: 7, unit: 'OMR/m3', label: 'Price per m3 of aggregate', group: 'prices', used: false,
     rationale: 'Not sourced for Oman specifically; typical GCC coarse-aggregate price. Shown for reference; ready-mix already includes aggregate.',
     source: 'Could not source a live price; industry-range estimate', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
@@ -468,7 +478,7 @@ const DEFAULTS = {
 
   /* --- Section 7: orchestrator amendments (these override section 6's headline numbers) --- */
   ext_perimeter_shape_factor: {
-    value: 1.15, unit: '-', label: 'Building shape factor for external wall length', group: 'walls',
+    value: 1.15, unit: '-', label: 'Building shape factor for external wall length', group: 'walls', used: true,
     rationale: 'External wall length = factor x 4 x square root of floor area. 1.0 is a perfect square, about 1.02 a 1.5:1 rectangle, 1.2-1.3 an L-shaped villa.',
     source: 'Geometry; the villa-shape allowance is a rule of thumb', sourceUrl: null,
     confidence: 'Guessing', lastChecked: '2026-09-22'
@@ -686,8 +696,22 @@ function resolveValues(overrides) {
     if (v < 0) {
       throw new Error('Your value for "' + DEFAULTS[key].label + '" cannot be negative.');
     }
+    if (!DEFAULTS[key].used) {
+      /* Golden rule, second half: anything the user can edit must actually change the answer.
+       * Reference-only rows (block sizes, wall thicknesses, mortar materials, the superseded
+       * perimeter factor, the derived slab volume) are shown read-only, so an override of one
+       * would be silently ignored — we refuse it instead. */
+      throw new Error('"' + DEFAULTS[key].label + '" is reference only and is not used in the v1 calculation, so it cannot be changed.');
+    }
     values[key] = v;
   }
+  return values;
+}
+
+/* Derived values follow the row they come from rather than being edited on their own. */
+function applyDerived(values) {
+  /* concrete_m3_per_m2_slab = slab_thickness_m x 1 m2 */
+  values.concrete_m3_per_m2_slab = values.slab_thickness_m * 1;
   return values;
 }
 
@@ -695,7 +719,7 @@ function resolveValues(overrides) {
  * traceability promise in docs/CONVENTIONS.md. */
 function estimate(house, overrides) {
   const h = validateHouse(house);
-  const a = resolveValues(overrides);
+  const a = applyDerived(resolveValues(overrides));
   const wastedBlocks = 1 + a.block_wastage_pct / 100;     /* block_wastage_pct */
   const wastedConcrete = 1 + a.concrete_wastage_pct / 100; /* concrete_wastage_pct */
   const wastedSteel = 1 + a.rebar_wastage_pct / 100;       /* rebar_wastage_pct */
@@ -727,7 +751,8 @@ function estimate(house, overrides) {
   /* Concrete. Footings and the ground slab are ground-floor only, so they use floorAreaM2 once;
    * columns, beams and slabs repeat on every floor, so they use builtUpAreaM2.
    * Keys: concrete_m3_per_m2_footings_tiebeams, concrete_m3_per_m2_ground_slab,
-   *       concrete_m3_per_m2_columns, concrete_m3_per_m2_beams, concrete_m3_per_m2_slab. */
+   *       concrete_m3_per_m2_columns, concrete_m3_per_m2_beams,
+   *       concrete_m3_per_m2_slab (derived from slab_thickness_m). */
   const rawFootings = floorAreaM2 * a.concrete_m3_per_m2_footings_tiebeams;
   const rawGroundSlab = floorAreaM2 * a.concrete_m3_per_m2_ground_slab;
   const rawColumns = builtUpAreaM2 * a.concrete_m3_per_m2_columns;
@@ -735,10 +760,9 @@ function estimate(house, overrides) {
   const rawSlabs = builtUpAreaM2 * a.concrete_m3_per_m2_slab;
 
   /* Steel = element concrete BEFORE wastage x that element's rebar_kg_per_m3 x rebar wastage.
-   * Ground slab decision: a ground-bearing slab is lightly reinforced, but it is reinforced — the
-   * worked example in assumptions.md section 6 spreads steel across ALL concrete including the
-   * ground slab, so we apply rebar_kg_per_m3_slabs to it too. Leaving it at zero would put the
-   * sample house below the 11-16 tonne range section 7 expects. */
+   * The ground slab has its own rate, rebar_kg_per_m3_ground_slab (assumptions.md section 7): a
+   * ground-bearing slab carries a light mesh, not a suspended-slab cage, so it is reinforced, but
+   * far more lightly than the floor and roof slabs. */
   const steel = function (m3, kgPerM3) { return m3 * kgPerM3 * wastedSteel; };
 
   const rows = {
@@ -752,7 +776,7 @@ function estimate(house, overrides) {
     groundSlab: {
       label: 'Ground slab',
       concreteM3: round(rawGroundSlab * wastedConcrete, 2),
-      steelKg: round(steel(rawGroundSlab, a.rebar_kg_per_m3_slabs), 1),
+      steelKg: round(steel(rawGroundSlab, a.rebar_kg_per_m3_ground_slab), 1),
       blocks: 0,
       wastagePct: a.concrete_wastage_pct
     },
@@ -825,7 +849,8 @@ function estimate(house, overrides) {
       value: a[key],
       unit: d.unit,
       defaultValue: d.value,
-      overridden: a[key] !== d.value,
+      used: d.used,
+      overridden: d.used && a[key] !== d.value,
       source: d.source,
       sourceUrl: d.sourceUrl,
       confidence: d.confidence,
@@ -969,6 +994,9 @@ function estimate(house, overrides) {
     "round": 2,
     "startedAt": "2026-09-22T07:44:07.317Z",
     "prompt": "Fix round 2 for builder A (same files only: src/calc.js, test/calc.test.mjs). Code review found two golden-rule violations and one brittle test. Re-read docs/research/assumptions.md section 7 — it now has a new row and a \"Used vs reference-only\" rule.\n\n1. GOLDEN RULE: 13 DEFAULTS keys are accepted as overrides but never used (block_ext_length, block_ext_height, block_ext_thickness, block_int_thickness, mortar_joint_mm, wall_height_default_m, ext_wall_perimeter_factor, ext_wall_thickness_mm, int_wall_thickness_mm, slab_thickness_m, price_omr_cement_bag_50kg, price_omr_sand_m3, price_omr_aggregate_m3). Fix per section 7: add a boolean field `used` to every DEFAULTS row. `slab_thickness_m` becomes used: concrete_m3_per_m2_slab is DERIVED from it (remove concrete_m3_per_m2_slab from DEFAULTS and put it in ASSUMPTION_NOTES as \"derived: = slab_thickness_m × 1 m²\", or keep it in DEFAULTS with used:false and a rationale saying derived — pick one and say which). The other 12 get used:false. estimate() must throw a plain-English Error if an override targets a used:false key (\"… is reference only and is not used in the v1 calculation\"). assumptionsUsed rows carry `used` too.\n2. GOLDEN RULE: the ground slab's steel now has its own row, rebar_kg_per_m3_ground_slab (50 kg/m³). Use it instead of the slabs rate for the ground slab; update the traceability comment.\n3. Brittle test: the sanity band in section 7 is now 7,000–13,000 blocks, 110–140 m³, 10–16 t. Update the range test to those numbers; keep SAMPLE_HOUSE unchanged; update the golden snapshot constants to whatever the code now produces (steel will drop a little).\n4. New test (the reviewer's top gap): sweep EVERY DEFAULTS key — for each key with used:true, overriding it (e.g. ×1.5) must change at least one number in totals or inputs; for each used:false key, estimate must throw on override. This test is the automated proof of the golden rule's second half.\n5. Also assert in the existing assumptions-vs-DEFAULTS parity test that rebar_kg_per_m3_ground_slab is present.\n\nRun `node --test test/*.mjs` until green and the classic-script proof again. Final message (under 15 lines): what changed, new sample totals, test count/result, and the exact list of used:false keys so builder B can render them read-only.\n",
+    "report": "Round 2 done — only src/calc.js and test/calc.test.mjs changed.\n\nWhat changed\n1. Every DEFAULTS row now carries used: true|false; assumptionsUsed rows carry used too, and overridden can only be true for a used row. An override aimed at a used:false key throws a plain-English error (\"… is reference only and is not used in the v1 calculation\").\n2. slab_thickness_m is now the editable row and drives the slab volume. concrete_m3_per_m2_slab stays in DEFAULTS with used:false and is recomputed as slab_thickness_m × 1 m² on every estimate, so the derived row follows the thickness the user sets.\n3. New DEFAULTS row rebar_kg_per_m3_ground_slab (50 kg/m³, Guessing). The ground slab uses it instead of the suspended-slab rate; traceability comment rewritten.\n4. Sanity band updated to 7,000–13,000 blocks / 110–140 m³ / 10–16 t; SAMPLE_HOUSE untouched; golden snapshot re-pinned.\n5. New tests: the full sweep (every used:true key ×1.5 must move totals or inputs; every used:false key must throw), the ground-slab rate test, the derived-slab test, plus a parity assertion for the new key.\n\nNew sample totals: 8,053 blocks (4,408 ext / 3,645 int) · 129.08 m³ concrete · 12.048 t steel (was 12.909) · 9,057.62 OMR.\n\nTests: 25 tests, 25 pass, 0 fail. Classic-script proof re-run, identical totals.\n\nFor builder B — 13 rows are read-only (used:false): block_ext_length, block_ext_height, block_ext_thickness, block_int_thickness, mortar_joint_mm, wall_height_default_m, ext_wall_perimeter_factor, ext_wall_thickness_mm, int_wall_thickness_mm, concrete_m3_per_m2_slab (derived), price_omr_cement_bag_50kg, price_omr_sand_m3, price_omr_aggregate_m3. The other 20 are editable; B reads row.used.\n",
+    "finishedAt": "2026-09-22T07:46:35.125Z",
+    "outcome": "golden-rule fixes in; 25/25 tests; steel 12.9→12.0 t after ground-slab rate",
     "file": "07a-builder"
   },
   {
@@ -978,7 +1006,19 @@ function estimate(house, overrides) {
     "round": 2,
     "startedAt": "2026-09-22T07:44:07.382Z",
     "prompt": "Fix round 2 for builder B (same files only: src/page.html, scripts/build.mjs — plus ONE new file, test/build.test.mjs). Code review findings, all accepted by the lead:\n\n1. GOLDEN RULE (UI side): builder A is adding a boolean `used` to every DEFAULTS row (and to each assumptionsUsed row). Rows with used:false must render READ-ONLY in the assumptions panel — value shown as text, no input, no reset, a small \"reference only — not used in v1\" tag — and must never appear in the \"Using your own numbers for…\" note nor be marked as used in the \"Where every number came from\" table (show them in a separate short \"Reference only\" group there, or omit them). Never send a used:false key in overrides. Until builder A's change lands, treat a missing `used` field as true; the final page must run against the real calc.js. Note builder A may remove concrete_m3_per_m2_slab from DEFAULTS (it becomes derived from slab_thickness_m) — do not hard-code any key name in the page except for reading data.\n2. Breakdown table \"Wastage %\" column is misleading for rows with steel. Relabel the column \"Concrete / block wastage\" and, for rows with steel > 0, show \"5 % concrete · 5 % steel\" style text using the two material percentages from result.assumptionsUsed (concrete_wastage_pct, rebar_wastage_pct) — read from the result, never typed in.\n3. build.mjs: after stripping `export `, run `new Function(calcInline)` and exit non-zero with a clear message on a parse error. Change the import guard to only match real code lines (`/^import\\s/m` at column 0), not indented comments.\n4. Low: when the m² shortcut is ticked and the user presses Calculate with no size, flag the size field, not the hidden room list.\n5. New test test/build.test.mjs (node:test): runs scripts/build.mjs writing to a temp path (add an optional output path argument to build.mjs, default index.html), asserts the output contains no line starting with `export ` and that the inlined calculator between the CALC script tags parses via new Function and exposes estimate/DEFAULTS.\n\nRe-run `node scripts/build.mjs`, `node --test test/*.mjs`, `node scripts/smoke.mjs`, and check the panel at 390 shows the read-only rows sensibly. Final message (under 15 lines): what changed, build line, smoke result, test result.\n",
+    "report": "Round 2 done — all five findings addressed in src/page.html, scripts/build.mjs and the new test/build.test.mjs. Builder A's `used` flag landed mid-round, so everything is verified against the real src/calc.js (34 keys, 13 of them used:false).\n\n1. Assumptions panel: used:false rows render read-only (value as text + unit, no input, no reset, tag \"reference only — not used in v1\"). They never enter overrides, never appear in the \"Using your own numbers for…\" note, and sit in a separate \"Reference only\" line in \"Where every number came from\".\n2. Breakdown column renamed \"Concrete / block wastage\": rows with steel read \"5 % concrete · 5 % steel\", wall rows \"5 % blocks\" — percentages read from result.assumptionsUsed.\n3. build.mjs: optional output path argument, new Function parse check that exits 1 with a clear message (verified against a deliberately broken calc.js), import guard only matches column-0 code.\n4. With the m² shortcut ticked and no size typed, Calculate flags the size field; the room list and floors field are no longer flagged (floors was catching \"per floor\" — fixed).\n5. test/build.test.mjs: builds to a temp path, asserts no `export ` at column 0, markers gone, inlined calculator parses and works, inlined build log parses with a file stem on every record.\n\nBuild line: Wrote index.html — 121.8 KB, 9 build-log records (rebuild byte-identical).\nTests: node --test test/*.mjs — 25 pass, 0 fail. Smoke: PASS @1440 and @390 (blocks=8,053, no console errors, no horizontal scroll). Reference rows checked at 390px by screenshot.\n",
+    "finishedAt": "2026-09-22T07:48:34.278Z",
+    "outcome": "UI reference-only rows, wastage labels, guarded build, build test; smoke PASS",
     "file": "07b-builder"
+  },
+  {
+    "order": 8,
+    "agent": "verifier",
+    "model": "haiku",
+    "round": 2,
+    "startedAt": "2026-09-22T07:48:34.328Z",
+    "prompt": "Repo: /home/user/House-building. Second verification round after a fix round. Read docs/CONVENTIONS.md and run its \"Verify recipe\" exactly, in order, from the repo root:\n1. node --test test/*.mjs\n2. node scripts/build.mjs\n3. git diff --exit-code -- index.html\n4. node scripts/smoke.mjs\nReport one line per step: PASS or FAIL with the exact error output for a FAIL. Also report the total test count from step 1. Do not fix or edit anything.\n",
+    "file": "08-verifier"
   }
 ]</script>
 <script>
@@ -1026,13 +1066,18 @@ function estimate(house, overrides) {
   /* ---------- assumptions panel ---------- */
   var GROUP_TITLES = { blocks:'Blocks', walls:'Wall geometry', concrete:'Concrete', steel:'Steel', prices:'Prices', wastage:'Wastage allowances' };
   var defaultKeys = Object.keys(DEFAULTS);
+  // A row is used in the maths unless the calculator says otherwise.
+  function isUsed(row){ return !row || row.used !== false; }
+  var editableKeys = defaultKeys.filter(function(k){ return isUsed(DEFAULTS[k]); });
 
   function renderAssumptionNotes(){
     var box = $('#assumption-notes');
     if (!box || typeof ASSUMPTION_NOTES === 'undefined' || !ASSUMPTION_NOTES.length) return;
     var html = '<h4>Fixed for this version</h4>';
     ASSUMPTION_NOTES.forEach(function(n){
-      html += '<p class="muted" style="margin-bottom:var(--space-2)"><strong>' + esc(n.value) + '</strong> — ' +
+      // A plain "true"/"false" is not worth showing the reader — the rationale says it better.
+      var headline = /^(true|false)$/i.test(String(n.value)) ? '' : '<strong>' + esc(n.value) + '</strong> — ';
+      html += '<p class="muted" style="margin-bottom:var(--space-2)">' + headline +
         esc(n.rationale) + ' <span class="badge badge-' + esc(n.confidence) + '">' + esc(n.confidence) + '</span> ' +
         '<span>' + esc(n.source) + ', checked ' + esc(n.lastChecked) + '</span></p>';
     });
@@ -1057,13 +1102,19 @@ function estimate(house, overrides) {
           ? '<a href="' + esc(d.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(d.source) + '</a>'
           : esc(d.source);
         var isPct = String(d.unit).indexOf('%') === 0;
-        html += '<div class="a-row" data-row-key="' + esc(k) + '">' +
-          '<label for="ass-' + esc(k) + '">' + esc(d.label) +
-            ' <span class="dot-overridden">● edited</span></label>' +
-          '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
-            'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
-            'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>' +
-          '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>' +
+        var valueCell = isUsed(d)
+          ? '<div class="field"><input type="number" id="ass-' + esc(k) + '" data-assumption="' + esc(k) + '" ' +
+              'inputmode="decimal" min="0"' + (isPct ? ' max="100"' : '') + ' step="' + esc(stepFor(d.value)) + '" ' +
+              'value="' + esc(d.value) + '"><span class="unit">' + esc(d.unit) + '</span></div>'
+          : '<div class="field"><span class="readonly-value">' + esc(nf(d.value)) + '</span><span class="unit">' + esc(d.unit) + '</span></div>';
+        var resetCell = isUsed(d)
+          ? '<button type="button" class="btn-ghost" data-action="reset-default" data-key="' + esc(k) + '" disabled>Reset</button>'
+          : '<span class="tag-reference">reference only — not used in v1</span>';
+        html += '<div class="a-row' + (isUsed(d) ? '' : ' a-row-reference') + '" data-row-key="' + esc(k) + '">' +
+          (isUsed(d)
+            ? '<label for="ass-' + esc(k) + '">' + esc(d.label) + ' <span class="dot-overridden">● edited</span></label>'
+            : '<span class="a-label">' + esc(d.label) + '</span>') +
+          valueCell + resetCell +
           '<div class="a-meta"><span class="badge badge-' + esc(d.confidence) + '">' + esc(d.confidence) + '</span>' +
             '<span>' + srcHtml + '</span><span>checked ' + esc(d.lastChecked) + '</span></div>' +
         '</div>';
@@ -1075,7 +1126,7 @@ function estimate(house, overrides) {
   function assumptionInput(key){ return document.querySelector('[data-assumption="' + key + '"]'); }
 
   function refreshOverriddenFlags(){
-    defaultKeys.forEach(function(k){
+    editableKeys.forEach(function(k){
       var input = assumptionInput(k);
       if (!input) return;
       var row = input.closest('.a-row');
@@ -1088,7 +1139,7 @@ function estimate(house, overrides) {
 
   function collectOverrides(){
     var out = {};
-    defaultKeys.forEach(function(k){
+    editableKeys.forEach(function(k){   // never send a reference-only key
       var input = assumptionInput(k);
       if (!input) return;
       var raw = String(input.value).trim();
@@ -1137,6 +1188,20 @@ function estimate(house, overrides) {
 
   function renderBreakdown(result){
     var keys = Object.keys(result.elements);
+    // Both wastage figures come from the result itself, never typed in here.
+    function usedValue(key){
+      var row = (result.assumptionsUsed || []).filter(function(a){ return a.key === key; })[0];
+      return row ? row.value : null;
+    }
+    var steelPct = usedValue('rebar_wastage_pct');
+    var concretePct = usedValue('concrete_wastage_pct');
+    function wastageText(e){
+      var base = (e.blocks > 0 && !e.concreteM3)
+        ? fmtDec(e.wastagePct, 0) + ' % blocks'
+        : fmtDec(concretePct == null ? e.wastagePct : concretePct, 0) + ' % concrete';
+      if (e.steelKg > 0 && steelPct != null) base += ' · ' + fmtDec(steelPct, 0) + ' % steel';
+      return base;
+    }
     var rows = '';
     keys.forEach(function(k){
       var e = result.elements[k];
@@ -1145,7 +1210,7 @@ function estimate(house, overrides) {
         '<td class="num" data-label="Concrete">' + (e.concreteM3 ? fmtM3(e.concreteM3) + ' m³' : '—') + '</td>' +
         '<td class="num" data-label="Steel" title="' + esc(fmtInt(e.steelKg)) + ' kg">' + (e.steelKg ? fmtT(e.steelKg / 1000) + ' t' : '—') + '</td>' +
         '<td class="num" data-label="Blocks">' + (e.blocks ? fmtInt(e.blocks) + ' pcs' : '—') + '</td>' +
-        '<td class="num" data-label="Wastage">' + fmtDec(e.wastagePct, 0) + ' %</td>' +
+        '<td class="num" data-label="Concrete / block wastage">' + esc(wastageText(e)) + '</td>' +
         '<td class="num" data-label="Cost">' + fmtOmr(e.costOmr) + ' OMR</td>' +
       '</tr>';
     });
@@ -1155,17 +1220,19 @@ function estimate(house, overrides) {
       '<td class="num" data-label="Concrete">' + fmtM3(t.concreteM3) + ' m³</td>' +
       '<td class="num" data-label="Steel" title="' + esc(fmtInt(t.steelKg)) + ' kg">' + fmtT(t.steelTonnes) + ' t</td>' +
       '<td class="num" data-label="Blocks">' + fmtInt(t.blocks) + ' pcs</td>' +
-      '<td class="num" data-label="Wastage">—</td>' +
+      '<td class="num" data-label="Concrete / block wastage">—</td>' +
       '<td class="num" data-label="Cost">' + fmtOmr(t.costOmr) + ' OMR</td>' +
     '</tr>';
     $('#breakdown-table').innerHTML =
       '<table class="responsive"><thead><tr><th>Part</th><th class="num">Concrete</th><th class="num">Steel</th>' +
-      '<th class="num">Blocks</th><th class="num">Wastage</th><th class="num">Cost</th></tr></thead>' +
+      '<th class="num">Blocks</th><th class="num">Concrete / block wastage</th><th class="num">Cost</th></tr></thead>' +
       '<tbody>' + rows + '</tbody><tfoot>' + foot + '</tfoot></table>';
   }
 
   function renderTrace(result){
-    var rows = (result.assumptionsUsed || []).map(function(a){
+    var all = result.assumptionsUsed || [];
+    var reference = all.filter(function(a){ return !isUsed(a); });
+    var rows = all.filter(isUsed).map(function(a){
       var src = a.sourceUrl
         ? '<a href="' + esc(a.sourceUrl) + '" rel="noopener noreferrer" target="_blank">' + esc(a.source) + '</a>'
         : esc(a.source);
@@ -1176,9 +1243,14 @@ function estimate(house, overrides) {
         '<td class="cell-full" data-label="Source">' + src + ' <span class="badge badge-' + esc(a.confidence) + '">' + esc(a.confidence) + '</span> <span class="muted">checked ' + esc(a.lastChecked) + '</span></td>' +
       '</tr>';
     }).join('');
+    var referenceHtml = reference.length
+      ? '<h4>Reference only — not used in this calculation</h4><p class="muted">' +
+          reference.map(function(a){ return esc(a.label) + ' (' + esc(nf(a.value)) + ' ' + esc(a.unit) + ')'; }).join(' · ') +
+        '</p>'
+      : '';
     $('#trace-table').innerHTML =
       '<table class="responsive"><thead><tr><th>Assumption</th><th class="num">Used</th><th class="num">Shipped default</th><th>Source</th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>';
+      '<tbody>' + rows + '</tbody></table>' + referenceHtml;
   }
 
   function renderResult(result){
@@ -1190,7 +1262,7 @@ function estimate(house, overrides) {
     steelEl.title = fmtInt(t.steelKg) + ' kg';
     $('[data-result="cost-total"]').textContent = fmtOmr(t.costOmr);
 
-    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden; });
+    var overridden = (result.assumptionsUsed || []).filter(function(a){ return a.overridden && isUsed(a); });
     var note = $('#overrides-note');
     if (overridden.length){
       note.textContent = 'Using your own numbers for: ' + overridden.map(function(a){ return a.label; }).join(', ') + '.';
@@ -1215,16 +1287,23 @@ function estimate(house, overrides) {
 
   function flagImplicatedFields(message){
     var m = message.toLowerCase();
-    if (m.indexOf('floor') > -1 && m.indexOf('area') === -1) setFieldError('#floors-field', '#floors-msg', message);
+    var aboutFloorSize = m.indexOf('per floor') > -1 || m.indexOf('area') > -1;
+    if (m.indexOf('floor') > -1 && !aboutFloorSize) setFieldError('#floors-field', '#floors-msg', message);
     if (m.indexOf('wall height') > -1) setFieldError('#wall-height-field', '#wall-height-msg', message);
-    if (m.indexOf('room') > -1) setFieldError('#rooms-block', '#rooms-msg', message);
-    if (m.indexOf('m²') > -1 || m.indexOf('area') > -1) setFieldError('#m2-value-wrap', '#m2-msg', message);
+    var shortcutOn = $('#m2-shortcut-toggle').checked && !$$('#room-list tr').length;
+    if (m.indexOf('room') > -1 && !shortcutOn) setFieldError('#rooms-block', '#rooms-msg', message);
+    if (m.indexOf('m²') > -1 || aboutFloorSize) setFieldError('#m2-value-wrap', '#m2-msg', message);
   }
 
   function preCheck(house){
     if (!isFinite(house.floors)) throw new Error('Please enter the number of floors (' + LIMITS.floors[0] + ' to ' + LIMITS.floors[1] + ').');
     if (!isFinite(house.wallHeightM)) throw new Error('Please enter the wall height in metres (' + LIMITS.wallHeightM[0] + ' to ' + LIMITS.wallHeightM[1] + ').');
-    if (!house.rooms.length) throw new Error('Please add at least one room or space before calculating.');
+    if (!house.rooms.length) {
+      if ($('#m2-shortcut-toggle').checked) {
+        throw new Error('Please enter the approximate size per floor in m² (' + LIMITS.areaM2[0] + ' to ' + LIMITS.areaM2[1] + ') so the room list can be created.');
+      }
+      throw new Error('Please add at least one room or space before calculating.');
+    }
     for (var i = 0; i < house.rooms.length; i++){
       var r = house.rooms[i];
       if (!isFinite(r.lengthM) || !isFinite(r.widthM)) {
@@ -1276,7 +1355,7 @@ function estimate(house, overrides) {
       recalcIfShowing();
     }
     else if (action === 'reset-all'){
-      defaultKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
+      editableKeys.forEach(function(k){ var i = assumptionInput(k); if (i) i.value = DEFAULTS[k].value; });
       refreshOverriddenFlags();
       recalcIfShowing();
     }

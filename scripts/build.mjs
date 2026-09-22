@@ -1,5 +1,5 @@
 // Builds index.html: inlines src/calc.js and every docs/build-log/*.json into src/page.html.
-// Run:  node scripts/build.mjs
+// Run:  node scripts/build.mjs [output path]   (default: index.html in the repo root)
 // Deterministic: same inputs -> byte-identical output (the verify recipe diffs index.html).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,7 +9,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pagePath = path.join(root, 'src', 'page.html');
 const calcPath = path.join(root, 'src', 'calc.js');
 const logDir = path.join(root, 'docs', 'build-log');
-const outPath = path.join(root, 'index.html');
+const outArg = process.argv[2];
+const outPath = outArg ? path.resolve(outArg) : path.join(root, 'index.html');
 
 function die(message) {
   console.error('Build failed: ' + message);
@@ -31,7 +32,7 @@ for (const marker of ['<!--CALC-->', '<!--BUILDLOG-->']) {
 
 // 2. The calculator, turned from an ES module into a plain in-page script.
 const calcSource = read(calcPath, 'The calculator (src/calc.js)');
-const importLine = calcSource.split('\n').findIndex((l) => /^\s*import\s/.test(l));
+const importLine = calcSource.split('\n').findIndex((l) => /^import\s/.test(l));
 if (importLine !== -1) {
   die(`src/calc.js line ${importLine + 1} uses "import". The page inlines it as a plain script, so it must have no imports.`);
 }
@@ -43,6 +44,13 @@ const calcInline = calcSource
   .map((line) => (line.startsWith('export ') ? line.slice('export '.length) : line))
   .join('\n')
   .trimEnd();
+
+// The inlined calculator must at least parse, or the page would be dead on arrival.
+try {
+  new Function(calcInline);
+} catch (err) {
+  die(`src/calc.js does not parse once its "export " prefixes are stripped: ${err.message}`);
+}
 
 // 3. Every build-log record, oldest filename first, each tagged with its filename stem.
 const logFiles = fs.existsSync(logDir)
@@ -70,4 +78,5 @@ const html = page
 
 fs.writeFileSync(outPath, html);
 const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(1);
-console.log(`Wrote ${path.relative(root, outPath)} — ${kb} KB, ${records.length} build-log record${records.length === 1 ? '' : 's'}.`);
+const shown = path.relative(root, outPath);
+console.log(`Wrote ${shown.startsWith('..') ? outPath : shown} — ${kb} KB, ${records.length} build-log record${records.length === 1 ? '' : 's'}.`);
