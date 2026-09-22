@@ -1018,7 +1018,22 @@ function estimate(house, overrides) {
     "round": 2,
     "startedAt": "2026-09-22T07:48:34.328Z",
     "prompt": "Repo: /home/user/House-building. Second verification round after a fix round. Read docs/CONVENTIONS.md and run its \"Verify recipe\" exactly, in order, from the repo root:\n1. node --test test/*.mjs\n2. node scripts/build.mjs\n3. git diff --exit-code -- index.html\n4. node scripts/smoke.mjs\nReport one line per step: PASS or FAIL with the exact error output for a FAIL. Also report the total test count from step 1. Do not fix or edit anything.\n",
+    "report": "Step 1 (node --test test/*.mjs): PASS — 25 tests (23 calculator, 2 build)\nStep 2 (node scripts/build.mjs): PASS\nStep 3 (git diff --exit-code -- index.html): PASS\nStep 4 (node scripts/smoke.mjs): PASS — 8,053 blocks at 1440px and 390px, 0 console errors\n",
+    "finishedAt": "2026-09-22T07:49:30.149Z",
+    "outcome": "4/4 PASS",
     "file": "08-verifier"
+  },
+  {
+    "order": 9,
+    "agent": "orchestrator",
+    "model": "fable",
+    "round": 1,
+    "startedAt": "2026-09-22T07:49:30.198Z",
+    "prompt": "Main session (Fable) — wrap-up. Run as the orchestrator following dev-lead's playbook, because cloud sessions cap agent nesting at one level (Agents handbook, build-round rule 6). Steps taken: product-manager spec → researcher + ui-designer in parallel → builder A (calculation core + tests) and builder B (page + build script) in parallel against one pinned contract → verifier → code-reviewer → fix round 2 to the same two builders → verifier round 2.\n",
+    "report": "Verdict: SHIP. 10 dispatches, 2 rounds. What happened along the way, honestly:\n- The researcher's worked example under-counted blocks because its room list covered half the floor; the orchestrator added a \"list every space\" rule (assumptions.md §7) before the builders started.\n- Verifier round 1 failed step 3 because the orchestrator wrote a log record after committing the generated page — a sequencing mistake, not a code bug. The verifier misdiagnosed it as the build script logging runs; corrected in the record.\n- Code review found two golden-rule violations: 13 editable assumptions that didn't affect the maths (the page claimed they did), and ground-slab steel with no named assumption. Both fixed in round 2, and a test now sweeps every assumption to prove it either moves the result or is marked reference-only.\n- Final: 25 tests green, build idempotent, browser smoke green at 1440 and 390. Sample house: 8,053 blocks, 129.1 m³ concrete, 12.0 t steel, ≈9,058 OMR at the default (editable, unsourced-for-Oman) prices.\nLeft for the owner: prices marked \"Guessing\" need a real supplier quote before anyone relies on the OMR total; floorplan upload and Arabic are v2.\n",
+    "finishedAt": "2026-09-22T07:49:30.198Z",
+    "outcome": "SHIP — 25 tests, smoke green, 2 rounds",
+    "file": "09-orchestrator"
   }
 ]</script>
 <script>
