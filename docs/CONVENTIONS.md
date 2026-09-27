@@ -53,6 +53,11 @@ index.html                     GENERATED — the shareable file. Never edit by h
 
 Report pass/fail per step. Only failures come back verbose.
 
+**Pre-push check.** `.githooks/pre-push` runs steps 1–3 before every push (a few seconds) and
+stops the push if a test fails or `index.html` is stale. Switch it on once per copy of the repo
+with `git config core.hooksPath .githooks` (`Agents/scripts/setup-mac.sh` does this for you).
+Emergency only: `git push --no-verify` skips it.
+
 ## Commit style
 
 Plain English, one line, what changed for the user. Never commit `node_modules`.

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Runs before every push. It checks the estimator's sums, rebuilds the page and
+# makes sure the committed index.html is up to date (steps 1-3 of the verify
+# recipe in docs/CONVENTIONS.md). Takes a few seconds.
+# Emergency only: `git push --no-verify` skips it.
+echo ""
+echo "House-building: checking the sums and that index.html is freshly built before this push..."
+echo ""
+set -e
+node --test test/*.mjs
+node scripts/build.mjs
+if ! git diff --quiet -- index.html; then
+  echo ""
+  echo "index.html was out of date. It has now been rebuilt: commit it, then push again."
+  exit 1
+fi
