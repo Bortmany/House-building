@@ -351,3 +351,10 @@ test('doubling the floors doubles the blocks and the slab concrete but not the f
   assert.equal(two.elements.groundSlab.concreteM3, one.elements.groundSlab.concreteM3);
   assert.equal(two.inputs.builtUpAreaM2, one.inputs.builtUpAreaM2 * 2);
 });
+
+test('percentage assumptions above their sensible limit are refused', () => {
+  assert.throws(() => estimate(SAMPLE_HOUSE, { opening_deduction_pct: 150 }), /cannot be more than 90%/);
+  assert.throws(() => estimate(SAMPLE_HOUSE, { block_wastage_pct: 80 }), /cannot be more than 50%/);
+  assert.throws(() => estimate(SAMPLE_HOUSE, { rebar_wastage_pct: 101 }), /cannot be more than 50%/);
+  assert.doesNotThrow(() => estimate(SAMPLE_HOUSE, { opening_deduction_pct: 30, concrete_wastage_pct: 10 }));
+});

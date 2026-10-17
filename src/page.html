@@ -378,6 +378,11 @@ details[open]>summary .chev{transform:rotate(180deg)}
       if (raw === '') return;
       var v = Number(raw);
       if (!isFinite(v)) throw new Error('Please enter a number for "' + DEFAULTS[k].label + '" in Assumptions & prices.');
+      if (v < 0) throw new Error('Your value for "' + DEFAULTS[k].label + '" cannot be negative.');
+      if (DEFAULTS[k].unit === '%') {
+        var maxPct = /_wastage_pct$/.test(k) ? 50 : (k === 'opening_deduction_pct' ? 90 : 100);
+        if (v > maxPct) throw new Error('Your value for "' + DEFAULTS[k].label + '" cannot be more than ' + maxPct + '%.');
+      }
       if (v !== Number(DEFAULTS[k].value)) out[k] = v;
     });
     return out;

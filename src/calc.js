@@ -442,6 +442,14 @@ function resolveValues(overrides) {
     if (v < 0) {
       throw new Error('Your value for "' + DEFAULTS[key].label + '" cannot be negative.');
     }
+    if (DEFAULTS[key].unit === '%') {
+      /* Percentages: never above 100; wastage is a few percent, so above 50 is a typo;
+       * doors and windows cannot take away (nearly) the whole wall. */
+      const maxPct = /_wastage_pct$/.test(key) ? 50 : (key === 'opening_deduction_pct' ? 90 : 100);
+      if (v > maxPct) {
+        throw new Error('Your value for "' + DEFAULTS[key].label + '" cannot be more than ' + maxPct + '%.');
+      }
+    }
     if (!DEFAULTS[key].used) {
       /* Golden rule, second half: anything the user can edit must actually change the answer.
        * Reference-only rows (block sizes, wall thicknesses, mortar materials, the superseded
